@@ -336,7 +336,7 @@ namespace LabPresence
             FPS.OnUpdate();
             LevelHooks.OnUpdate();
             if (FusionConfig == null)
-                Fusion.EnsureMetadataSync();
+                Fusion.EnsureMetaDataSync();
 
             _elapsedSeconds += Time.deltaTime;
             if (_elapsedSeconds >= Config.RefreshDelay)

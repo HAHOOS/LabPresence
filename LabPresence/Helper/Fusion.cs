@@ -15,8 +15,6 @@ namespace LabPresence.Helper
     {
         private const string AllowKey = "LabPresence.AllowInvites";
 
-        private readonly static Dictionary<ulong, Texture2D> Avatars = [];
-
         public static bool HasFusion => HelperMethods.CheckIfAssemblyLoaded("LabFusion");
 
         public static bool IsConnected
@@ -140,7 +138,7 @@ namespace LabPresence.Helper
             return LabFusion.Network.NetworkInfo.CurrentNetworkLayer?.Title;
         }
 
-        public static void EnsureMetadataSync()
+        public static void EnsureMetaDataSync()
         {
             if (IsConnected) Internal_EnsureMetadataSync();
         }
