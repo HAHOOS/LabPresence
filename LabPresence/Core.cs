@@ -167,12 +167,13 @@ namespace LabPresence
 
             Hooking.OnMarrowGameStarted += () => RPC.SetRPC(Config.MarrowGameStarted);
 
+            //LevelHooks.Init();
             LevelHooks.OnLevelLoaded += (_) =>
             {
                 if (!Fusion.IsConnected)
                     RPC.SetRPC(Config.LevelLoaded);
                 else
-                    RPC.SetRPC(FusionConfig.LevelLoaded, GetParty(), GetSecrets());
+                    RPC.SetRPC(FusionConfig.LevelLoaded);
             };
 
             LevelHooks.OnLevelLoading += (_) =>
@@ -180,7 +181,7 @@ namespace LabPresence
                 if (!Fusion.IsConnected)
                     RPC.SetRPC(Config.LevelLoading);
                 else
-                    RPC.SetRPC(FusionConfig.LevelLoading, GetParty(), GetSecrets());
+                    RPC.SetRPC(FusionConfig.LevelLoading);
             };
 
             AssetWarehouse.OnReady((Action)(() => RPC.SetRPC(Config.AssetWarehouseLoaded)));
@@ -344,9 +345,14 @@ namespace LabPresence
                 if (RPC.CurrentConfig != null)
                 {
                     if (!Fusion.IsConnected)
+                    {
                         RPC.SetRPC(RPC.CurrentConfig);
+                    }
                     else
-                        RPC.SetRPC(RPC.CurrentConfig, GetParty(), GetSecrets());
+                    {
+                        var (key, tooltip) = Fusion.GetGamemodeRPC();
+                        RPC.SetRPC(RPC.CurrentConfig, GetParty(), GetSecrets(), key, tooltip);
+                    }
                 }
             }
         }

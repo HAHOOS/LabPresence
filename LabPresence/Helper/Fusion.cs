@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
 
 using BoneLib;
 
 using DiscordRPC.Message;
 
 using UnityEngine;
+using System.Text.Json;
 
 namespace LabPresence.Helper
 {
@@ -270,6 +272,57 @@ namespace LabPresence.Helper
         {
             LabFusion.Utilities.MultiplayerHooking.OnDisconnect -= Update;
             LabFusion.Utilities.MultiplayerHooking.OnDisconnect += Update;
+        }
+
+        public static (string key, string tooltip) GetGamemodeRPC()
+        {
+            if (!IsConnected) return (null, null);
+            else return Internal_GetGamemodeRPC();
+        }
+
+        private static (string key, string tooltip) Internal_GetGamemodeRPC()
+        {
+            if (!LabFusion.SDK.Gamemodes.GamemodeManager.IsGamemodeStarted)
+                return (null, null);
+
+            if (LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode == null)
+                return (null, null);
+
+            var gamemode = LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
+
+            return (GetGamemodeKey(gamemode.Barcode), gamemode.Title);
+        }
+
+        private static JsonDocument KnownGamemodesCache;
+
+        public static string GetGamemodeKey(string barcode)
+        {
+            try
+            {
+                const string knownGamemodes = "https://github.com/HAHOOS/LabPresence/blob/master/Data/gamemodes.json?raw=true";
+                if (KnownGamemodesCache == null)
+                {
+                    var client = new HttpClient();
+                    var req = client.GetAsync(knownGamemodes);
+                    req.Wait();
+                    if (req.IsCompletedSuccessfully)
+                    {
+                        var content = req.Result.Content.ReadAsStringAsync();
+                        content.Wait();
+                        if (content.IsCompletedSuccessfully)
+                        {
+                            KnownGamemodesCache = JsonDocument.Parse(content.Result);
+                        }
+                    }
+                }
+                if (KnownGamemodesCache != null && KnownGamemodesCache.RootElement.TryGetProperty(barcode, out JsonElement val))
+                    return val.GetString();
+            }
+            catch (Exception e)
+            {
+                Core.Logger.Error($"An unexpected error has occurred while trying to remotely get a key for the gamemode, defaulting to unknown key. Exception:\n{e}");
+            }
+            return "unknown_gamemode";
         }
 
         private static void Update()

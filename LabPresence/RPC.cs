@@ -33,7 +33,7 @@ namespace LabPresence
         public static void SetStartToNow()
             => RPC.SetTimestamp((ulong)DateTimeOffset.Now.ToUnixTimeMilliseconds(), null);
 
-        public static void SetRPC(string details, string state, Party party = null, Secrets secrets = null)
+        public static void SetRPC(string details, string state, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
         {
             if (Core.Client?.IsInitialized != true)
                 return;
@@ -47,20 +47,22 @@ namespace LabPresence
                 Assets = new DiscordRPC.Assets()
                 {
                     LargeImageKey = "icon",
-                    LargeImageText = "BONELAB"
+                    LargeImageText = "BONELAB",
+                    SmallImageKey = smallImageKey,
+                    SmallImageText = smallImageTitle
                 },
                 Party = party,
-                Secrets = secrets
+                Secrets = secrets,
             });
         }
 
-        public static void SetRPC(RPCConfig config, Party party = null, Secrets secrets = null)
+        public static void SetRPC(RPCConfig config, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
         {
             if (!config.Use)
                 return;
 
             CurrentConfig = config;
-            SetRPC(config.Details, config.State, party, secrets);
+            SetRPC(config.Details, config.State, party, secrets, smallImageKey, smallImageTitle);
         }
 
         private static readonly Dictionary<ulong, Texture2D> _avatarCache = [];
