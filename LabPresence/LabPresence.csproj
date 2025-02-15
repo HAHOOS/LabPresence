@@ -23,6 +23,9 @@
 		<Reference Include="Il2Cppmscorlib">
 			<HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll</HintPath>
 		</Reference>
+		<Reference Include="Newtonsoft.Json">
+			<HintPath>$(BONELAB_DIR)\MelonLoader\net6\Newtonsoft.Json.dll</HintPath>
+		</Reference>
 		<Reference Include="Il2CppSystem.Core">
 			<HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\Il2CppSystem.Core.dll</HintPath>
 		</Reference>
@@ -49,9 +52,6 @@
 		</Reference>
 		<Reference Include="UnityEngine.PhysicsModule">
 			<HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\UnityEngine.PhysicsModule.dll</HintPath>
-		</Reference>
-		<Reference Include="DiscordRPC">
-			<HintPath>$(BONELAB_DIR)\UserLibs\DiscordRPC.dll</HintPath>
 		</Reference>
 
 		<Reference Include="System.Drawing.Common">

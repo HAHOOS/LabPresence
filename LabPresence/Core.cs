@@ -8,11 +8,13 @@ using UnityEngine;
 
 using Il2CppSLZ.Marrow.Warehouse;
 using Il2CppSLZ.Marrow.SceneStreaming;
+using Il2CppSLZ.Marrow;
 
 using MelonLoader.Utils;
 using MelonLoader.Preferences;
 
 using System;
+using System.Linq;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -20,17 +22,13 @@ using System.Collections;
 
 using BoneLib;
 using BoneLib.Notifications;
-using Il2CppSLZ.Marrow;
-using System.Linq;
-
-[assembly: MelonInfo(typeof(LabPresence.Core), "LabPresence", "1.0.0", "HAHOOS", null)]
-[assembly: MelonGame("Stress Level Zero", "BONELAB")]
-[assembly: MelonPriority(-1000)]
 
 namespace LabPresence
 {
     public class Core : MelonMod
     {
+        public const string Version = "1.0.0";
+
         public static DiscordRpcClient Client { get; private set; }
 
         private const string ClientID = "1338522973421965382";
