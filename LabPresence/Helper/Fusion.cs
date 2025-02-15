@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net.Http;
-
-using BoneLib;
 
 using DiscordRPC.Message;
 
@@ -15,7 +12,7 @@ namespace LabPresence.Helper
     {
         private const string AllowKey = "LabPresence.AllowInvites";
 
-        public static bool HasFusion => HelperMethods.CheckIfAssemblyLoaded("LabFusion");
+        public static bool HasFusion => Core.FindMelon("LabFusion", "Lakatrazz") != null;
 
         public static bool IsConnected
         {
