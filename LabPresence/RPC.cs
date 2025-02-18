@@ -24,10 +24,7 @@ namespace LabPresence
             Timestamps.EndUnixMilliseconds = end;
 
             if (Core.Client.CurrentPresence != null)
-            {
-                Core.Client.CurrentPresence.Timestamps = Timestamps;
-                Core.Client.SetPresence(Core.Client.CurrentPresence);
-            }
+                Core.Client.Update(x => x.Timestamps = Timestamps);
         }
 
         public static void SetStartToNow()
