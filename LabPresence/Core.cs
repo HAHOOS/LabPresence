@@ -45,6 +45,13 @@ namespace LabPresence
 
         public override void OnInitializeMelon()
         {
+            if (HelperMethods.IsAndroid())
+            {
+                LoggerInstance.Error("This mod is not supported as it is unlikely for it to actually work.");
+                this.Unregister("Unsupported platform", false);
+                return;
+            }
+
             Logger = LoggerInstance;
 
             LoggerInstance.Msg("Creating preferences");
