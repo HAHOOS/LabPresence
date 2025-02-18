@@ -187,7 +187,10 @@ namespace LabPresence.Helper
         private static bool Internal_EnsureNetworkLayer(string title)
         {
             if (!LabFusion.Network.NetworkLayer.LayerLookup.TryGetValue(title, out var layer))
+            {
+                Core.Logger.Error($"Could find network layer '{title}'");
                 return false;
+            }
 
             try
             {
