@@ -22,6 +22,7 @@ using System.Collections;
 
 using BoneLib;
 using BoneLib.Notifications;
+using System.Reflection;
 
 namespace LabPresence
 {
@@ -64,6 +65,31 @@ namespace LabPresence
             FusionCategory.SetFilePath(Path.Combine(dir.FullName, "fusion.cfg"), true, false);
             FusionCategory.SaveToFile(false);
 
+            try
+            {
+                LoggerInstance.Msg("Adding README.txt");
+                var assembly = Assembly.GetExecutingAssembly();
+                var name = assembly?.GetName()?.Name;
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    const string path = "{0}.Embedded.README.txt";
+                    using var stream = assembly.GetManifestResourceStream(string.Format(path, name));
+                    using var reader = new StreamReader(stream);
+                    var text = reader.ReadToEnd();
+                    using var writer = File.CreateText(Path.Combine(dir.FullName, "README.txt"));
+                    writer.Write(text);
+                    writer.Flush();
+                }
+                else
+                {
+                    LoggerInstance.Warning("The assembly name could not be found! Cannot add README.txt");
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerInstance.Error($"An unexpected error has occurred while creating README.txt, exception:\n{ex}");
+            }
+
             Fusion.Init();
 
             LoggerInstance.Msg("Adding placeholders");
@@ -74,7 +100,7 @@ namespace LabPresence
 
             Client = new DiscordRpcClient(ClientID, autoEvents: false)
             {
-                Logger = new MLLogger(LoggerInstance, DiscordRPC.Logging.LogLevel.Error)
+                Logger = new MLLogger(LoggerInstance, Config.RPCLogLevel)
             };
 
             Client.OnReady += (_, e) =>
@@ -84,7 +110,6 @@ namespace LabPresence
 
                 RegisterURIScheme();
 
-                LoggerInstance.Msg("Setting subscriptions");
                 Client.SynchronizeState();
             };
 
@@ -118,7 +143,7 @@ namespace LabPresence
                             {
                                 Notifier.Send(new Notification()
                                 {
-                                    Title = "Failure",
+                                    Title = "Failure | LabPresence",
                                     Message = "Failed to ensure network layer, check the console/logs for errors. If none are present, it's likely the user is playing on a network layer that you do not have.",
                                     Type = NotificationType.Error,
                                     PopupLength = 5f,
@@ -134,7 +159,7 @@ namespace LabPresence
                 {
                     Notifier.Send(new Notification()
                     {
-                        Title = "Failure",
+                        Title = "Failure | LabPresence",
                         Message = "An unexpected error has occurred while trying to join the server, check the console or logs for more details",
                         Type = NotificationType.Error,
                         PopupLength = 5f,
@@ -156,7 +181,7 @@ namespace LabPresence
                 {
                     Notifier.Send(new Notification()
                     {
-                        Title = "Failure",
+                        Title = "Failure | LabPresence",
                         Message = "An unexpected error has occurred while handling join request, check the console or logs for more details",
                         Type = NotificationType.Error,
                         PopupLength = 5f,
@@ -169,8 +194,6 @@ namespace LabPresence
             Client.SetSubscription(EventType.Join | EventType.JoinRequest);
 
             Client.Initialize();
-
-            Hooking.OnMarrowGameStarted += () => RPC.SetRPC(Config.MarrowGameStarted);
 
             //LevelHooks.Init();
             LevelHooks.OnLevelLoaded += (_) =>
@@ -220,20 +243,17 @@ namespace LabPresence
 
         private static void AddDefaultPlaceholders()
         {
-            Placeholders.AddPlaceholder("levelName", () => SceneStreamer.Session?.Level?.Title ?? "N/A");
-            Placeholders.AddPlaceholder("avatarName", () => Player.RigManager?.AvatarCrate?.Crate?.Title ?? "N/A");
-            Placeholders.AddPlaceholder("platform", () => MelonUtils.CurrentPlatform == (MelonPlatformAttribute.CompatiblePlatforms)3 ? "Quest" : "PCVR");
-            Placeholders.AddPlaceholder("mlVersion", () => AppDomain.CurrentDomain?.GetAssemblies()?.FirstOrDefault(x => x.GetName().Name == "MelonLoader")?.GetName()?.Version?.ToString() ?? "N/A");
-            Placeholders.AddPlaceholder("health", () => (Player.RigManager?.health?.curr_Health)?.ToString() ?? "0");
-            Placeholders.AddPlaceholder("maxHealth", () => (Player.RigManager?.health?.max_Health).ToString() ?? "0");
-            Placeholders.AddPlaceholder("healthPercentange", () => $"{MathF.Floor((Player.RigManager?.health?.curr_Health ?? 0) / (Player.RigManager?.health?.max_Health ?? 0))}%");
-            Placeholders.AddPlaceholder("fps", () => FPS.FramesPerSecond.ToString());
-            Placeholders.AddPlaceholder("cpuUsage", () => SystemInfo.processorCount.ToString());
-            Placeholders.AddPlaceholder("gpuUsage", () => SystemInfo.graphicsMemorySize.ToString());
-            Placeholders.AddPlaceholder("gpuName", () => SystemInfo.graphicsDeviceName);
-            Placeholders.AddPlaceholder("operatingSystem", () => SystemInfo.operatingSystem);
-            Placeholders.AddPlaceholder("codeModsCount", () => RegisteredMelons.Count.ToString());
-            Placeholders.AddPlaceholder("modsCount", () =>
+            Placeholders.RegisterPlaceholder("levelName", () => SceneStreamer.Session?.Level?.Title ?? "N/A");
+            Placeholders.RegisterPlaceholder("avatarName", () => Player.RigManager?.AvatarCrate?.Crate?.Title ?? "N/A");
+            Placeholders.RegisterPlaceholder("platform", () => MelonUtils.CurrentPlatform == (MelonPlatformAttribute.CompatiblePlatforms)3 ? "Quest" : "PCVR");
+            Placeholders.RegisterPlaceholder("mlVersion", () => AppDomain.CurrentDomain?.GetAssemblies()?.FirstOrDefault(x => x.GetName().Name == "MelonLoader")?.GetName()?.Version?.ToString() ?? "N/A");
+            Placeholders.RegisterPlaceholder("health", () => (Player.RigManager?.health?.curr_Health)?.ToString() ?? "0", 4f);
+            Placeholders.RegisterPlaceholder("maxHealth", () => (Player.RigManager?.health?.max_Health).ToString() ?? "0");
+            Placeholders.RegisterPlaceholder("healthPercentange", () => $"{MathF.Floor((Player.RigManager?.health?.curr_Health ?? 0) / (Player.RigManager?.health?.max_Health ?? 0))}%", 4f);
+            Placeholders.RegisterPlaceholder("fps", () => FPS.FramesPerSecond.ToString(), 4f);
+            Placeholders.RegisterPlaceholder("operatingSystem", () => SystemInfo.operatingSystem);
+            Placeholders.RegisterPlaceholder("codeModsCount", () => RegisteredMelons.Count.ToString());
+            Placeholders.RegisterPlaceholder("modsCount", () =>
             {
                 if (!AssetWarehouse.ready || AssetWarehouse.Instance == null)
                     return "0";
@@ -243,16 +263,16 @@ namespace LabPresence
 
             // Ammo
             // Not sure why would anyone wanna use this placeholder
-            Placeholders.AddPlaceholder("ammoLight", () => AmmoInventory.Instance?._groupCounts["light"].ToString() ?? "0");
-            Placeholders.AddPlaceholder("ammoMedium", () => AmmoInventory.Instance?._groupCounts["medium"].ToString() ?? "0");
-            Placeholders.AddPlaceholder("ammoHeavy", () => AmmoInventory.Instance?._groupCounts["heavy"].ToString() ?? "0");
+            Placeholders.RegisterPlaceholder("ammoLight", () => AmmoInventory.Instance?._groupCounts["light"].ToString() ?? "0", 4f);
+            Placeholders.RegisterPlaceholder("ammoMedium", () => AmmoInventory.Instance?._groupCounts["medium"].ToString() ?? "0", 4f);
+            Placeholders.RegisterPlaceholder("ammoHeavy", () => AmmoInventory.Instance?._groupCounts["heavy"].ToString() ?? "0", 4f);
 
             // Fusion placeholders
-            Placeholders.AddPlaceholder("fusion_lobbyName", () => Fusion.GetServerName());
-            Placeholders.AddPlaceholder("fusion_host", () => Fusion.GetHost());
-            Placeholders.AddPlaceholder("fusion_currentPlayers", () => Fusion.GetPlayerCount().current.ToString());
-            Placeholders.AddPlaceholder("fusion_maxPlayers", () => Fusion.GetPlayerCount().max.ToString());
-            Placeholders.AddPlaceholder("fusion_privacy", () => Enum.GetName(Fusion.GetPrivacy()).Replace("_", " "));
+            Placeholders.RegisterPlaceholder("fusion_lobbyName", () => Fusion.GetServerName());
+            Placeholders.RegisterPlaceholder("fusion_host", () => Fusion.GetHost());
+            Placeholders.RegisterPlaceholder("fusion_currentPlayers", () => Fusion.GetPlayerCount().current.ToString());
+            Placeholders.RegisterPlaceholder("fusion_maxPlayers", () => Fusion.GetPlayerCount().max.ToString());
+            Placeholders.RegisterPlaceholder("fusion_privacy", () => Enum.GetName(Fusion.GetPrivacy()).Replace("_", " "));
         }
 
         private static string Encrypt(string secret)
@@ -280,7 +300,7 @@ namespace LabPresence
         public static string RemoveUnityRichText(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
-            return Regex.Replace(text, "(?<!<noparse>)<(.*?)>(?!</noparse>)", string.Empty);
+            return Regex.Replace(text, "<(.*?)>", string.Empty);
         }
 
         private static Party GetParty()
@@ -333,6 +353,10 @@ namespace LabPresence
             };
         }
 
+        private string lastState, lastDetails;
+
+        private float delay;
+
         public override void OnUpdate()
         {
             base.OnUpdate();
@@ -340,15 +364,23 @@ namespace LabPresence
                 Client?.Invoke();
             FPS.OnUpdate();
             LevelHooks.OnUpdate();
-            if (FusionConfig == null)
+            if (FusionConfig != null)
                 Fusion.EnsureMetaDataSync();
 
             _elapsedSeconds += Time.deltaTime;
-            if (_elapsedSeconds >= Config.RefreshDelay)
+
+            if (RPC.CurrentConfig != null)
             {
-                _elapsedSeconds = 0;
-                if (RPC.CurrentConfig != null)
+                if (lastDetails != RPC.CurrentConfig.Details && lastState != RPC.CurrentConfig.State)
                 {
+                    lastDetails = RPC.CurrentConfig.Details;
+                    lastState = RPC.CurrentConfig.State;
+                    delay = RPC.CurrentConfig.GetMinimumDelay();
+                }
+                if (_elapsedSeconds >= Math.Clamp(Config.RefreshDelay, delay, double.MaxValue))
+                {
+                    _elapsedSeconds = 0;
+
                     if (!Fusion.IsConnected)
                     {
                         RPC.SetRPC(RPC.CurrentConfig);
@@ -356,7 +388,7 @@ namespace LabPresence
                     else
                     {
                         var (key, tooltip) = Fusion.GetGamemodeRPC();
-                        RPC.SetRPC(RPC.CurrentConfig, GetParty(), GetSecrets(), key, tooltip);
+                        RPC.SetRPC(RPC.CurrentConfig, ActivityType.Playing, GetParty(), GetSecrets(), key, tooltip);
                     }
                 }
             }

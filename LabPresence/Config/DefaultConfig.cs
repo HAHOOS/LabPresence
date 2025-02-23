@@ -1,17 +1,21 @@
-﻿using Tomlet.Attributes;
+﻿using DiscordRPC.Logging;
+
+using Tomlet.Attributes;
 
 namespace LabPresence.Config
 {
     public class DefaultConfig()
     {
+        [TomlPrecedingComment("The delay at which the Rich Presence will update.\nNote that using some placeholders will have a minimum delay that if higher than the set one, will override when the placeholder is present on the Rich Presence")]
         [TomlProperty("RefreshDelay")]
         public float RefreshDelay { get; set; } = 0.75f;
 
+        [TomlPrecedingComment("The logs of RPC that will be displayed, available: None, Trace, Info, Warning, Error")]
+        [TomlProperty("RPCLogLevel")]
+        public LogLevel RPCLogLevel { get; set; } = LogLevel.Error;
+
         [TomlProperty("PreGameStarted")]
         public RPCConfig PreGameStarted { get; set; } = new("Game loading...", "%codeModsCount% melons");
-
-        [TomlProperty("MarrowGameStarted")]
-        public RPCConfig MarrowGameStarted { get; set; } = new("Game started");
 
         [TomlProperty("AssetWarehouseLoaded")]
         public RPCConfig AssetWarehouseLoaded { get; set; } = new("Asset Warehouse loaded", "%modsCount% mods");

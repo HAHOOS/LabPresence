@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections;
 
 using Il2CppSLZ.Marrow.SceneStreaming;
 using Il2CppSLZ.Marrow.Utilities;
 using Il2CppSLZ.Marrow.Warehouse;
-
-using MelonLoader;
 
 namespace LabPresence.Helper
 {
