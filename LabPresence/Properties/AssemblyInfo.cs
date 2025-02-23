@@ -13,10 +13,7 @@ using MelonLoader;
 
 #region Info
 
-// General Information about an assembly is controlled through the following
-// set of attributes. Change these attribute values to modify the information
-// associated with an assembly.
-[assembly: AssemblyTitle("LabPresence")]
+[assembly: AssemblyTitle("Adds Discord RPC to BONELAB")]
 [assembly: AssemblyDescription("Adds Discord RPC to BONELAB")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("HAHOOS")]
