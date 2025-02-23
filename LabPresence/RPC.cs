@@ -30,7 +30,7 @@ namespace LabPresence
         public static void SetStartToNow()
             => RPC.SetTimestamp((ulong)DateTimeOffset.Now.ToUnixTimeMilliseconds(), null);
 
-        public static void SetRPC(string details, string state, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
+        public static void SetRPC(string details, string state, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
         {
             if (Core.Client?.IsInitialized != true)
                 return;
@@ -40,7 +40,7 @@ namespace LabPresence
                 Details = Core.RemoveUnityRichText(details?.ApplyPlaceholders()),
                 State = Core.RemoveUnityRichText(state?.ApplyPlaceholders()),
                 Timestamps = Timestamps,
-                Type = DiscordRPC.ActivityType.Playing,
+                Type = type,
                 Assets = new DiscordRPC.Assets()
                 {
                     LargeImageKey = "icon",
@@ -53,13 +53,13 @@ namespace LabPresence
             });
         }
 
-        public static void SetRPC(RPCConfig config, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
+        public static void SetRPC(RPCConfig config, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
         {
             if (!config.Use)
                 return;
 
             CurrentConfig = config;
-            SetRPC(config.Details, config.State, party, secrets, smallImageKey, smallImageTitle);
+            SetRPC(config.Details, config.State, type, party, secrets, smallImageKey, smallImageTitle);
         }
 
         private static readonly Dictionary<ulong, Texture2D> _avatarCache = [];
@@ -72,7 +72,7 @@ namespace LabPresence
                 return _avatarCache[user.ID];
 
             Texture2D texture = null;
-            var avatar = user.GetAvatarURL(DiscordRPC.User.AvatarFormat.PNG, User.AvatarSize.x512);
+            var avatar = user.GetAvatarURL(User.AvatarFormat.PNG, User.AvatarSize.x512);
             var client = new HttpClient();
             var task = client.GetAsync(avatar);
             task.Wait();
