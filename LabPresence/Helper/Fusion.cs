@@ -5,6 +5,9 @@ using DiscordRPC.Message;
 
 using UnityEngine;
 using System.Text.Json;
+using BoneLib.Notifications;
+using NotificationType = BoneLib.Notifications.NotificationType;
+using System.Linq;
 
 namespace LabPresence.Helper
 {
@@ -117,11 +120,7 @@ namespace LabPresence.Helper
 
         private static string Internal_GetServerCode()
         {
-            var lobbyInfo = LabFusion.Network.LobbyInfoManager.LobbyInfo;
-            if (lobbyInfo == null)
-                return string.Empty;
-
-            return lobbyInfo.LobbyCode;
+            return LabFusion.Network.NetworkHelper.GetServerCode();
         }
 
         public static string GetCurrentNetworkLayerTitle()
@@ -144,7 +143,7 @@ namespace LabPresence.Helper
         {
             if (!LabFusion.Network.NetworkInfo.IsServer)
                 LabFusion.Player.LocalPlayer.Metadata.TryRemoveMetadata(AllowKey);
-            else
+            else if (!LabFusion.Player.LocalPlayer.Metadata.TryGetMetadata(AllowKey, out string val) || !bool.TryParse(val, out bool value) || value != Core.FusionConfig.AllowPlayersToInvite)
                 LabFusion.Player.LocalPlayer.Metadata.TrySetMetadata(AllowKey, Core.FusionConfig.AllowPlayersToInvite.ToString());
         }
 
@@ -219,10 +218,87 @@ namespace LabPresence.Helper
 
         private static void Internal_JoinByCode(string code)
         {
-            if (IsConnected)
-                LabFusion.Network.NetworkHelper.Disconnect("Joining another server");
+            if (string.Equals(LabFusion.Network.NetworkHelper.GetServerCode(), code, StringComparison.OrdinalIgnoreCase))
+            {
+                Notifier.Send(new Notification()
+                {
+                    Title = "Error | LabPresence",
+                    Message = "You are already in the server!",
+                    PopupLength = 3.5f,
+                    ShowTitleOnPopup = true,
+                    Type = NotificationType.Error
+                });
+                return;
+            }
 
-            LabFusion.Network.NetworkHelper.JoinServerByCode(code);
+            LabFusion.Network.NetworkInfo.CurrentNetworkLayer.Matchmaker.RequestLobbies(x =>
+            {
+                LabFusion.Data.LobbyInfo targetLobby = null;
+
+                foreach (var item in x.lobbies)
+                {
+                    var info = item.metadata.LobbyInfo;
+                    if (info.LobbyCode == code)
+                    {
+                        targetLobby = info;
+                        break;
+                    }
+                }
+
+                if (targetLobby == null)
+                {
+                    Core.Logger.Error("The lobby was not found");
+                    Notifier.Send(new Notification()
+                    {
+                        Title = "Error | LabPresence",
+                        Message = "The server you wanted to join was not found!",
+                        PopupLength = 3.5f,
+                        ShowTitleOnPopup = true,
+                        Type = NotificationType.Error
+                    });
+                    return;
+                }
+
+                if (targetLobby.Privacy == LabFusion.Network.ServerPrivacy.FRIENDS_ONLY)
+                {
+                    var host = targetLobby.PlayerList.Players.FirstOrDefault(x => x.Username == targetLobby.LobbyHostName);
+                    if (host == null)
+                        Core.Logger.Warning("Could not find host, unable to verify if you can join the server (Privacy: Friends Only)");
+
+                    if (!LabFusion.Network.NetworkInfo.CurrentNetworkLayer.IsFriend(host.LongId))
+                    {
+                        Core.Logger.Error("The lobby is friends only and you are not friends with the host, cannot join");
+                        Notifier.Send(new Notification()
+                        {
+                            Title = "Error | LabPresence",
+                            Message = "Cannot join the server, because it is friends only and you are not friends with the host!",
+                            PopupLength = 3.5f,
+                            ShowTitleOnPopup = true,
+                            Type = NotificationType.Error
+                        });
+                        return;
+                    }
+                }
+
+                if (targetLobby.Privacy == LabFusion.Network.ServerPrivacy.LOCKED)
+                {
+                    Core.Logger.Error("The lobby is locked, cannot join");
+                    Notifier.Send(new Notification()
+                    {
+                        Title = "Error | LabPresence",
+                        Message = "Cannot join the server, because it is locked",
+                        PopupLength = 3.5f,
+                        ShowTitleOnPopup = true,
+                        Type = NotificationType.Error
+                    });
+                    return;
+                }
+
+                if (IsConnected)
+                    LabFusion.Network.NetworkHelper.Disconnect("Joining another server");
+
+                LabFusion.Network.NetworkHelper.JoinServerByCode(code);
+            });
         }
 
         internal static void JoinRequest(JoinRequestMessage message)
@@ -238,13 +314,13 @@ namespace LabPresence.Helper
             if (Core.FusionConfig?.ShowJoinRequestPopUp == true)
             {
                 Texture2D texture = RPC.GetAvatar(message.User) ?? new Texture2D(1, 1);
-                BoneLib.Notifications.Notifier.Send(new BoneLib.Notifications.Notification()
+                Notifier.Send(new Notification()
                 {
                     Title = "Join Request",
-                    Message = $"{message.User.DisplayName} (@{message.User.Username}) wants to join you! Go to the fusion menu to accept or deny the quest",
+                    Message = $"{message.User.DisplayName} (@{message.User.Username}) wants to join you! Go to the fusion menu to accept or deny the request",
                     PopupLength = 5f,
                     ShowTitleOnPopup = true,
-                    Type = BoneLib.Notifications.NotificationType.CustomIcon,
+                    Type = NotificationType.CustomIcon,
                     CustomIcon = texture
                 });
             }
@@ -303,7 +379,7 @@ namespace LabPresence.Helper
                     var client = new HttpClient();
                     var req = client.GetAsync(knownGamemodes);
                     req.Wait();
-                    if (req.IsCompletedSuccessfully)
+                    if (req.IsCompletedSuccessfully && req.Result.IsSuccessStatusCode)
                     {
                         var content = req.Result.Content.ReadAsStringAsync();
                         content.Wait();
