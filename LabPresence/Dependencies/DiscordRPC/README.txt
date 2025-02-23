@@ -1,0 +1,2 @@
+﻿This is a modified copy of the source code from the repository https://github.com/Lachee/discord-rpc-csharp
+The copy of the LICENSE from the repository can be found in the LICENSE.txt file in the same folder as this file.
