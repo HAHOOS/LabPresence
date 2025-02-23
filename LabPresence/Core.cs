@@ -121,7 +121,7 @@ namespace LabPresence
             {
                 try
                 {
-                    LoggerInstance.Msg("Joining lobby");
+                    LoggerInstance.Msg("Received Join Request");
                     string decrypted = Decrypt(e.Secret);
                     string[] split = decrypted.Split("|");
 
@@ -133,8 +133,18 @@ namespace LabPresence
 
                     void join()
                     {
-                        if (code != Fusion.GetServerCode())
+                        LoggerInstance.Msg("Attempting to join");
+                        if (code != Fusion.GetLobbyCode())
                         {
+                            Notifier.Send(new Notification()
+                            {
+                                Title = "LabPresence",
+                                Message = "Attempting to join the target lobby, this might take a few seconds...",
+                                PopupLength = 4f,
+                                ShowTitleOnPopup = true,
+                                Type = NotificationType.Information
+                            });
+
                             if (Fusion.EnsureNetworkLayer(layer))
                             {
                                 Fusion.JoinByCode(code);
@@ -151,6 +161,18 @@ namespace LabPresence
                                 });
                             }
                         }
+                        else
+                        {
+                            LoggerInstance.Error("Player is already in the lobby");
+                            Notifier.Send(new Notification()
+                            {
+                                Title = "Failure | LabPresence",
+                                Message = "Could not join, because you are already in the lobby!",
+                                Type = NotificationType.Error,
+                                PopupLength = 5f,
+                                ShowTitleOnPopup = true,
+                            });
+                        }
                     }
 
                     MelonCoroutines.Start(AfterLevelLoaded(join));
@@ -160,12 +182,12 @@ namespace LabPresence
                     Notifier.Send(new Notification()
                     {
                         Title = "Failure | LabPresence",
-                        Message = "An unexpected error has occurred while trying to join the server, check the console or logs for more details",
+                        Message = "An unexpected error has occurred while trying to join the lobby, check the console or logs for more details",
                         Type = NotificationType.Error,
                         PopupLength = 5f,
                         ShowTitleOnPopup = true,
                     });
-                    LoggerInstance.Error($"An unexpected error has occurred while trying to join the server, exception:\n{ex}");
+                    LoggerInstance.Error($"An unexpected error has occurred while trying to join the lobby, exception:\n{ex}");
                 }
             };
 
@@ -268,7 +290,7 @@ namespace LabPresence
             Placeholders.RegisterPlaceholder("ammoHeavy", () => AmmoInventory.Instance?._groupCounts["heavy"].ToString() ?? "0", 4f);
 
             // Fusion placeholders
-            Placeholders.RegisterPlaceholder("fusion_lobbyName", () => Fusion.GetServerName());
+            Placeholders.RegisterPlaceholder("fusion_lobbyName", () => Fusion.GetLobbyName());
             Placeholders.RegisterPlaceholder("fusion_host", () => Fusion.GetHost());
             Placeholders.RegisterPlaceholder("fusion_currentPlayers", () => Fusion.GetPlayerCount().current.ToString());
             Placeholders.RegisterPlaceholder("fusion_maxPlayers", () => Fusion.GetPlayerCount().max.ToString());
@@ -308,7 +330,7 @@ namespace LabPresence
             if (!Fusion.IsConnected)
                 return null;
 
-            var id = Fusion.GetServerID();
+            var id = Fusion.GetLobbyID();
 
             // Discord requires the ID string to have at least 2 characters
             if (id == 0 || id.ToString().Length < 2)
@@ -316,7 +338,7 @@ namespace LabPresence
 
             return new Party()
             {
-                ID = Fusion.GetServerID().ToString(),
+                ID = Fusion.GetLobbyID().ToString(),
                 Privacy = Fusion.GetPrivacy() == Fusion.ServerPrivacy.Public ? Party.PrivacySetting.Public : Party.PrivacySetting.Private,
                 Max = Fusion.GetPlayerCount().max,
                 Size = Fusion.GetPlayerCount().current
@@ -341,7 +363,7 @@ namespace LabPresence
             if (string.IsNullOrWhiteSpace(layer))
                 return null;
 
-            var code = Fusion.GetServerCode();
+            var code = Fusion.GetLobbyCode();
             if (string.IsNullOrWhiteSpace(code))
                 return null;
 

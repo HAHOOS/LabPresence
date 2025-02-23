@@ -32,19 +32,19 @@ namespace LabPresence.Helper
             return LabFusion.Network.NetworkInfo.HasServer;
         }
 
-        public static string GetServerName()
+        public static string GetLobbyName()
         {
             if (!IsConnected) return "N/A";
-            else return Internal_GetServerName();
+            else return Internal_GetLobbyName();
         }
 
-        internal static string Internal_GetServerName()
+        internal static string Internal_GetLobbyName()
         {
             var lobbyInfo = LabFusion.Network.LobbyInfoManager.LobbyInfo;
             var lobbyName = lobbyInfo?.LobbyName;
             if (lobbyInfo == null)
                 return "N/A";
-            return string.IsNullOrWhiteSpace(lobbyName) ? $"{lobbyInfo.LobbyHostName}'s server" : lobbyName;
+            return string.IsNullOrWhiteSpace(lobbyName) ? $"{lobbyInfo.LobbyHostName}'s lobby" : lobbyName;
         }
 
         public static string GetHost()
@@ -97,13 +97,13 @@ namespace LabPresence.Helper
             return (ServerPrivacy)((int)current);
         }
 
-        public static ulong GetServerID()
+        public static ulong GetLobbyID()
         {
             if (!IsConnected) return 0;
-            else return Internal_GetServerID();
+            else return Internal_GetLobbyID();
         }
 
-        private static ulong Internal_GetServerID()
+        private static ulong Internal_GetLobbyID()
         {
             var lobbyInfo = LabFusion.Network.LobbyInfoManager.LobbyInfo;
             if (lobbyInfo == null)
@@ -112,13 +112,13 @@ namespace LabPresence.Helper
             return lobbyInfo.LobbyId;
         }
 
-        public static string GetServerCode()
+        public static string GetLobbyCode()
         {
             if (!IsConnected) return string.Empty;
-            else return Internal_GetServerCode();
+            else return Internal_GetLobbyCode();
         }
 
-        private static string Internal_GetServerCode()
+        private static string Internal_GetLobbyCode()
         {
             return LabFusion.Network.NetworkHelper.GetServerCode();
         }
@@ -223,7 +223,7 @@ namespace LabPresence.Helper
                 Notifier.Send(new Notification()
                 {
                     Title = "Error | LabPresence",
-                    Message = "You are already in the server!",
+                    Message = "You are already in the lobby!",
                     PopupLength = 3.5f,
                     ShowTitleOnPopup = true,
                     Type = NotificationType.Error
@@ -251,7 +251,7 @@ namespace LabPresence.Helper
                     Notifier.Send(new Notification()
                     {
                         Title = "Error | LabPresence",
-                        Message = "The server you wanted to join was not found!",
+                        Message = "The lobby you wanted to join was not found!",
                         PopupLength = 3.5f,
                         ShowTitleOnPopup = true,
                         Type = NotificationType.Error
@@ -263,7 +263,7 @@ namespace LabPresence.Helper
                 {
                     var host = targetLobby.PlayerList.Players.FirstOrDefault(x => x.Username == targetLobby.LobbyHostName);
                     if (host == null)
-                        Core.Logger.Warning("Could not find host, unable to verify if you can join the server (Privacy: Friends Only)");
+                        Core.Logger.Warning("Could not find host, unable to verify if you can join the lobby (Privacy: Friends Only)");
 
                     if (!LabFusion.Network.NetworkInfo.CurrentNetworkLayer.IsFriend(host.LongId))
                     {
@@ -271,7 +271,7 @@ namespace LabPresence.Helper
                         Notifier.Send(new Notification()
                         {
                             Title = "Error | LabPresence",
-                            Message = "Cannot join the server, because it is friends only and you are not friends with the host!",
+                            Message = "Cannot join the lobby, because it is friends only and you are not friends with the host!",
                             PopupLength = 3.5f,
                             ShowTitleOnPopup = true,
                             Type = NotificationType.Error
@@ -286,7 +286,7 @@ namespace LabPresence.Helper
                     Notifier.Send(new Notification()
                     {
                         Title = "Error | LabPresence",
-                        Message = "Cannot join the server, because it is locked",
+                        Message = "Cannot join the lobby, because it is locked",
                         PopupLength = 3.5f,
                         ShowTitleOnPopup = true,
                         Type = NotificationType.Error
@@ -295,7 +295,7 @@ namespace LabPresence.Helper
                 }
 
                 if (IsConnected)
-                    LabFusion.Network.NetworkHelper.Disconnect("Joining another server");
+                    LabFusion.Network.NetworkHelper.Disconnect("Joining another lobby");
 
                 LabFusion.Network.NetworkHelper.JoinServerByCode(code);
             });
