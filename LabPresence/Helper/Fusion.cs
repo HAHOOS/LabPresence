@@ -231,74 +231,91 @@ namespace LabPresence.Helper
                 return;
             }
 
-            LabFusion.Network.NetworkInfo.CurrentNetworkLayer.Matchmaker.RequestLobbies(x =>
+            if (LabFusion.Network.NetworkInfo.CurrentNetworkLayer.Matchmaker != null)
             {
-                LabFusion.Data.LobbyInfo targetLobby = null;
-
-                foreach (var item in x.lobbies)
+                LabFusion.Network.NetworkInfo.CurrentNetworkLayer.Matchmaker.RequestLobbies(x =>
                 {
-                    var info = item.metadata.LobbyInfo;
-                    if (info.LobbyCode == code)
+                    LabFusion.Data.LobbyInfo targetLobby = null;
+
+                    if (x.lobbies != null)
                     {
-                        targetLobby = info;
-                        break;
+                        foreach (var item in x.lobbies)
+                        {
+                            var info = item.metadata.LobbyInfo;
+                            if (info?.LobbyCode == code)
+                            {
+                                targetLobby = info;
+                                break;
+                            }
+                        }
                     }
-                }
 
-                if (targetLobby == null)
-                {
-                    Core.Logger.Error("The lobby was not found");
-                    Notifier.Send(new Notification()
+                    if (targetLobby == null)
                     {
-                        Title = "Error | LabPresence",
-                        Message = "The lobby you wanted to join was not found!",
-                        PopupLength = 3.5f,
-                        ShowTitleOnPopup = true,
-                        Type = NotificationType.Error
-                    });
-                    return;
-                }
-
-                if (targetLobby.Privacy == LabFusion.Network.ServerPrivacy.FRIENDS_ONLY)
-                {
-                    var host = targetLobby.PlayerList.Players.FirstOrDefault(x => x.Username == targetLobby.LobbyHostName);
-                    if (host == null)
-                        Core.Logger.Warning("Could not find host, unable to verify if you can join the lobby (Privacy: Friends Only)");
-
-                    if (!LabFusion.Network.NetworkInfo.CurrentNetworkLayer.IsFriend(host.LongId))
-                    {
-                        Core.Logger.Error("The lobby is friends only and you are not friends with the host, cannot join");
+                        Core.Logger.Error("The lobby was not found");
                         Notifier.Send(new Notification()
                         {
                             Title = "Error | LabPresence",
-                            Message = "Cannot join the lobby, because it is friends only and you are not friends with the host!",
+                            Message = "The lobby you wanted to join was not found!",
                             PopupLength = 3.5f,
                             ShowTitleOnPopup = true,
                             Type = NotificationType.Error
                         });
                         return;
                     }
-                }
 
-                if (targetLobby.Privacy == LabFusion.Network.ServerPrivacy.LOCKED)
-                {
-                    Core.Logger.Error("The lobby is locked, cannot join");
-                    Notifier.Send(new Notification()
+                    if (targetLobby.Privacy == LabFusion.Network.ServerPrivacy.FRIENDS_ONLY)
                     {
-                        Title = "Error | LabPresence",
-                        Message = "Cannot join the lobby, because it is locked",
-                        PopupLength = 3.5f,
-                        ShowTitleOnPopup = true,
-                        Type = NotificationType.Error
-                    });
-                    return;
-                }
+                        var host = targetLobby.PlayerList?.Players?.FirstOrDefault(x => x.Username == targetLobby.LobbyHostName);
+                        if (host == null)
+                        {
+                            Core.Logger.Warning("Could not find host, unable to verify if you can join the lobby (Privacy: Friends Only)");
+                        }
+                        else
+                        {
+                            if (!LabFusion.Network.NetworkInfo.CurrentNetworkLayer.IsFriend(host.LongId))
+                            {
+                                Core.Logger.Error("The lobby is friends only and you are not friends with the host, cannot join");
+                                Notifier.Send(new Notification()
+                                {
+                                    Title = "Error | LabPresence",
+                                    Message = "Cannot join the lobby, because it is friends only and you are not friends with the host!",
+                                    PopupLength = 3.5f,
+                                    ShowTitleOnPopup = true,
+                                    Type = NotificationType.Error
+                                });
+                                return;
+                            }
+                        }
+                    }
 
+                    if (targetLobby.Privacy == LabFusion.Network.ServerPrivacy.LOCKED)
+                    {
+                        Core.Logger.Error("The lobby is locked, cannot join");
+                        Notifier.Send(new Notification()
+                        {
+                            Title = "Error | LabPresence",
+                            Message = "Cannot join the lobby, because it is locked",
+                            PopupLength = 3.5f,
+                            ShowTitleOnPopup = true,
+                            Type = NotificationType.Error
+                        });
+                        return;
+                    }
+
+                    if (IsConnected)
+                        LabFusion.Network.NetworkHelper.Disconnect("Joining another lobby");
+
+                    LabFusion.Network.NetworkHelper.JoinServerByCode(code);
+                });
+            }
+            else
+            {
                 if (IsConnected)
                     LabFusion.Network.NetworkHelper.Disconnect("Joining another lobby");
 
                 LabFusion.Network.NetworkHelper.JoinServerByCode(code);
-            });
+            }
         }
 
         internal static void JoinRequest(JoinRequestMessage message)
