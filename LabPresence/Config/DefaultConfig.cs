@@ -14,6 +14,10 @@ namespace LabPresence.Config
         [TomlProperty("RPCLogLevel")]
         public LogLevel RPCLogLevel { get; set; } = LogLevel.Error;
 
+        [TomlPrecedingComment("What the RPC will display as time, available options: Level (since it was loaded), CurrentTime (the current time, example: 15:53:50) and GameSession (since the game was launched)")]
+        [TomlProperty("TimeMode")]
+        public TimeModeEnum TimeMode { get; set; } = TimeModeEnum.GameSession;
+
         [TomlProperty("PreGameStarted")]
         public RPCConfig PreGameStarted { get; set; } = new("Game loading...", "%codeModsCount% melons");
 
@@ -25,5 +29,12 @@ namespace LabPresence.Config
 
         [TomlProperty("LevelLoading")]
         public RPCConfig LevelLoading { get; set; } = new("Loading %levelName%");
+
+        public enum TimeModeEnum
+        {
+            Level,
+            CurrentTime,
+            GameSession
+        }
     }
 }

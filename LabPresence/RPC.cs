@@ -27,8 +27,16 @@ namespace LabPresence
                 Core.Client.Update(x => x.Timestamps = Timestamps);
         }
 
-        public static void SetStartToNow()
+        public static void SetTimestampStartToNow()
             => RPC.SetTimestamp((ulong)DateTimeOffset.Now.ToUnixTimeMilliseconds(), null);
+
+        public static void SetTimestampToCurrentTime()
+        {
+            var now = DateTimeOffset.Now;
+            var timeSpan = new TimeSpan(0, now.Hour, now.Minute, now.Second, now.Millisecond);
+            var substracted = now.Subtract(timeSpan);
+            RPC.SetTimestamp((ulong)substracted.ToUnixTimeMilliseconds(), null);
+        }
 
         public static void SetRPC(string details, string state, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
         {

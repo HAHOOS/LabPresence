@@ -23,6 +23,7 @@ using System.Collections;
 using BoneLib;
 using BoneLib.Notifications;
 using System.Reflection;
+using Il2CppSLZ.Marrow.Forklift;
 
 namespace LabPresence
 {
@@ -220,6 +221,9 @@ namespace LabPresence
             //LevelHooks.Init();
             LevelHooks.OnLevelLoaded += (_) =>
             {
+                if (Config.TimeMode == LabPresence.Config.DefaultConfig.TimeModeEnum.Level)
+                    RPC.SetTimestampStartToNow();
+
                 if (!Fusion.IsConnected)
                     RPC.SetRPC(Config.LevelLoaded);
                 else
@@ -236,7 +240,10 @@ namespace LabPresence
 
             AssetWarehouse.OnReady((Action)(() => RPC.SetRPC(Config.AssetWarehouseLoaded)));
 
-            RPC.SetStartToNow();
+            if (Config.TimeMode != LabPresence.Config.DefaultConfig.TimeModeEnum.CurrentTime)
+                RPC.SetTimestampStartToNow();
+            else
+                RPC.SetTimestampToCurrentTime();
 
             RPC.SetRPC(Config.PreGameStarted);
 
@@ -319,6 +326,8 @@ namespace LabPresence
 
         private static float _elapsedSeconds = 0;
 
+        private static float _elapsedSecondsDateCheck = 0;
+
         public static string RemoveUnityRichText(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
@@ -379,6 +388,8 @@ namespace LabPresence
 
         private float delay;
 
+        private int lastDay = 0;
+
         public override void OnUpdate()
         {
             base.OnUpdate();
@@ -390,9 +401,24 @@ namespace LabPresence
                 Fusion.EnsureMetaDataSync();
 
             _elapsedSeconds += Time.deltaTime;
+            _elapsedSecondsDateCheck += Time.deltaTime;
 
             if (RPC.CurrentConfig != null)
             {
+                if (_elapsedSecondsDateCheck >= 7.5f)
+                {
+                    _elapsedSecondsDateCheck = 0;
+                    if (Config.TimeMode == LabPresence.Config.DefaultConfig.TimeModeEnum.CurrentTime)
+                    {
+                        var now = DateTime.Now;
+                        if (now.Day != lastDay)
+                        {
+                            lastDay = now.Day;
+                            RPC.SetTimestampToCurrentTime();
+                        }
+                    }
+                }
+
                 if (lastDetails != RPC.CurrentConfig.Details && lastState != RPC.CurrentConfig.State)
                 {
                     lastDetails = RPC.CurrentConfig.Details;
