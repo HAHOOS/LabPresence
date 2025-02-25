@@ -161,7 +161,7 @@ namespace LabPresence
             if (state != null) placeholders.AddRange(state);
             if (details != null) placeholders.AddRange(details);
 
-            float max = 0f;
+            float max = 0.1f;
             placeholders?.ForEach(x => max = (float)Math.Clamp(max, x.MinimalDelay, double.MaxValue));
             return max;
         }

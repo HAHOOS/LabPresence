@@ -91,6 +91,11 @@ namespace LabPresence
                 LoggerInstance.Error($"An unexpected error has occurred while creating README.txt, exception:\n{ex}");
             }
 
+            if (Config.RefreshDelay <= 0.1)
+            {
+                LoggerInstance.Error("Hey, calm down. You shouldn't be spamming Discord servers! Although most of the requests won't be sent because they are identical presences, still please make it higher");
+            }
+
             Fusion.Init();
 
             LoggerInstance.Msg("Adding placeholders");
