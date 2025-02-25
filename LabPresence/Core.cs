@@ -134,12 +134,15 @@ namespace LabPresence
                     if (split.Length <= 1)
                         throw new Exception("Secret provided to join the lobby did not include all of the necessary info");
 
+                    if (split.Length > 2)
+                        throw new Exception("Secret provided to join the lobby was invalid, the name of the network layer or code to the server may have contained the '|' character used to separate network layer & code, causing unexpected results");
+
                     string layer = split[0];
                     string code = split[1];
 
                     void join()
                     {
-                        LoggerInstance.Msg("Attempting to join");
+                        LoggerInstance.Msg($"Attempting to join with the following code: {code}");
                         if (code != Fusion.GetLobbyCode())
                         {
                             Notifier.Send(new Notification()
