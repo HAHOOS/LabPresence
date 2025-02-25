@@ -4,6 +4,10 @@ namespace LabPresence.Config
 {
     public class FusionConfig()
     {
+        [TomlPrecedingComment("If the time mode will be set to 'Level', when in a fusion lobby it will override the time to display how long you are in the lobby instead of the level")]
+        [TomlProperty("OverrideTimeToLobby")]
+        public bool OverrrideTimeToLobby { get; set; } = true;
+
         [TomlProperty("ShowJoinRequestPopUp")]
         public bool ShowJoinRequestPopUp { get; set; } = true;
 

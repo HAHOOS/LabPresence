@@ -221,7 +221,7 @@ namespace LabPresence
             //LevelHooks.Init();
             LevelHooks.OnLevelLoaded += (_) =>
             {
-                if (Config.TimeMode == LabPresence.Config.DefaultConfig.TimeModeEnum.Level)
+                if (Config.TimeMode == LabPresence.Config.DefaultConfig.TimeModeEnum.Level && !(Fusion.IsConnected && FusionConfig.OverrrideTimeToLobby))
                     RPC.SetTimestampStartToNow();
 
                 if (!Fusion.IsConnected)

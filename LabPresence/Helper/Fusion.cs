@@ -363,6 +363,15 @@ namespace LabPresence.Helper
         {
             LabFusion.Utilities.MultiplayerHooking.OnDisconnect -= Update;
             LabFusion.Utilities.MultiplayerHooking.OnDisconnect += Update;
+
+            LabFusion.Utilities.MultiplayerHooking.OnJoinServer += SetTimestamp;
+            LabFusion.Utilities.MultiplayerHooking.OnStartServer += SetTimestamp;
+        }
+
+        private static void SetTimestamp()
+        {
+            if (Core.FusionConfig.OverrrideTimeToLobby && Core.Config.TimeMode == Config.DefaultConfig.TimeModeEnum.Level)
+                RPC.SetTimestampStartToNow();
         }
 
         public static (string key, string tooltip) GetGamemodeRPC()
@@ -418,6 +427,9 @@ namespace LabPresence.Helper
 
         private static void Update()
         {
+            if (Core.Config.TimeMode == Config.DefaultConfig.TimeModeEnum.Level && Core.FusionConfig.OverrrideTimeToLobby && !IsConnected)
+                RPC.SetTimestampStartToNow();
+
             if (RPC.CurrentConfig == Core.FusionConfig.LevelLoaded && !IsConnected)
                 RPC.SetRPC(Core.Config.LevelLoaded);
             else if (RPC.CurrentConfig == Core.FusionConfig.LevelLoading && !IsConnected)
