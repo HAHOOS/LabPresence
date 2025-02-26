@@ -14,9 +14,13 @@ namespace LabPresence.Config
         [TomlProperty("RPCLogLevel")]
         public LogLevel RPCLogLevel { get; set; } = LogLevel.Error;
 
-        [TomlPrecedingComment("What the RPC will display as time, available options: Level (since it was loaded), CurrentTime (the current time, example: 15:53:50) and GameSession (since the game was launched)")]
+        [TomlPrecedingComment("What the RPC will display as time, available options: Level (since the current level was loaded), CurrentTime (the current time, example: 15:53:50) and GameSession (since the game was launched)")]
         [TomlProperty("TimeMode")]
         public TimeModeEnum TimeMode { get; set; } = TimeModeEnum.GameSession;
+
+        [TomlPrecedingComment("If true, gamemodes that support custom tooltips will display custom text on the small icon. Disabling this option will cause the tooltip to only show the name of the gamemode")]
+        [TomlProperty("ShowCustomGamemodeToolTips")]
+        public bool ShowCustomGamemodeToolTips { get; set; } = true;
 
         [TomlProperty("PreGameStarted")]
         public RPCConfig PreGameStarted { get; set; } = new("Game loading...", "%codeModsCount% melons");

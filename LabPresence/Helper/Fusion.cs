@@ -8,6 +8,7 @@ using System.Text.Json;
 using BoneLib.Notifications;
 using NotificationType = BoneLib.Notifications.NotificationType;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace LabPresence.Helper
 {
@@ -25,6 +26,21 @@ namespace LabPresence.Helper
                     return Internal_IsConnected();
                 return false;
             }
+        }
+
+        public static bool IsGamemodeStarted
+        {
+            get
+            {
+                if (!IsConnected)
+                    return false;
+                return Internal_IsGamemodeStarted();
+            }
+        }
+
+        private static bool Internal_IsGamemodeStarted()
+        {
+            return LabFusion.SDK.Gamemodes.GamemodeManager.IsGamemodeStarted;
         }
 
         internal static bool Internal_IsConnected()
@@ -366,12 +382,97 @@ namespace LabPresence.Helper
 
             LabFusion.Utilities.MultiplayerHooking.OnJoinServer += SetTimestamp;
             LabFusion.Utilities.MultiplayerHooking.OnStartServer += SetTimestamp;
+
+            Gamemodes.RegisterTooltip("Lakatrazz.Hide And Seek", () =>
+            {
+                if (LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode?.Barcode != "Lakatrazz.Hide And Seek")
+                    return string.Empty;
+
+                var gamemode = (LabFusion.SDK.Gamemodes.HideAndSeek)LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
+                return $"{gamemode.HiderTeam.PlayerCount} hiders left!";
+            });
+            Gamemodes.RegisterTooltip("Lakatrazz.Deathmatch", () =>
+            {
+                if (LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode?.Barcode != "Lakatrazz.Deathmatch")
+                    return string.Empty;
+
+                var gamemode = (LabFusion.SDK.Gamemodes.Deathmatch)LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
+                var id = LabFusion.Player.PlayerIdManager.LocalId;
+
+                List<LabFusion.Player.PlayerId> plrs = [.. LabFusion.Player.PlayerIdManager.PlayerIds];
+                plrs = [.. plrs.OrderBy(x => gamemode.ScoreKeeper.GetScore(id))];
+                plrs.Reverse();
+
+                return $"#{plrs.FindIndex(x => x.IsMe) + 1} place with {gamemode.ScoreKeeper.GetScore(id)} points!";
+            });
+            Gamemodes.RegisterTooltip("Lakatrazz.Team Deathmatch", () =>
+            {
+                if (LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode?.Barcode != "Lakatrazz.Team Deathmatch")
+                    return string.Empty;
+
+                var gamemode = (LabFusion.SDK.Gamemodes.TeamDeathmatch)LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
+                var localPlayer = gamemode.TeamManager.GetLocalTeam();
+                var score = gamemode.ScoreKeeper.GetScore(localPlayer);
+                var otherScore = gamemode.ScoreKeeper.GetTotalScore() - score;
+                return $"Team {Core.RemoveUnityRichText(localPlayer.DisplayName)} with {score} points and {(score > otherScore ? "winning!" : otherScore > score ? "losing :(" : "neither winning or losing..")}";
+            });
+            Gamemodes.RegisterTooltip("Lakatrazz.Entangled", () =>
+            {
+                if (LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode?.Barcode != "Lakatrazz.Entangled")
+                    return string.Empty;
+
+                var gamemode = (LabFusion.SDK.Gamemodes.Entangled)LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
+                const string key = "InternalEntangledMetadata.Partner.{0}";
+                bool success = gamemode.Metadata.TryGetMetadata(string.Format(key, LabFusion.Player.PlayerIdManager.LocalLongId), out string val);
+                if (!success || val == "-1")
+                {
+                    return "With no partner :(";
+                }
+                else
+                {
+                    if (!ulong.TryParse(val, out ulong res))
+                        return "With no partner :(";
+                    var plr = LabFusion.Player.PlayerIdManager.GetPlayerId(res);
+                    if (plr == null)
+                        return "With no partner :(";
+
+                    if (!LabFusion.Network.MetadataHelper.TryGetDisplayName(plr, out string name))
+                        return "With no partner :(";
+
+                    return Core.RemoveUnityRichText(name);
+                }
+            });
         }
 
         private static void SetTimestamp()
         {
             if (Core.FusionConfig.OverrrideTimeToLobby && Core.Config.TimeMode == Config.DefaultConfig.TimeModeEnum.Level)
                 RPC.SetTimestampStartToNow();
+        }
+
+        public static string GetTeamPlayerCount(string team)
+        {
+            if (!IsConnected) return "0";
+            else return Internal_GetTeamPlayerCount(team);
+        }
+
+        private static string Internal_GetTeamPlayerCount(string team)
+        {
+            if (!LabFusion.SDK.Gamemodes.GamemodeManager.IsGamemodeStarted)
+                return "0";
+
+            if (LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode == null)
+                return "0";
+
+            var gamemode = LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
+            int count = 0;
+            foreach (var plr in LabFusion.Player.PlayerIdManager.PlayerIds)
+            {
+                var key = LabFusion.SDK.Metadata.KeyHelper.GetKeyFromPlayer(LabFusion.SDK.Metadata.CommonKeys.TeamKey, plr);
+                if (gamemode.Metadata.TryGetMetadata(key, out string val) && !string.IsNullOrWhiteSpace(val) && val == team)
+                    count++;
+            }
+            return count.ToString();
         }
 
         public static (string key, string tooltip) GetGamemodeRPC()
@@ -389,8 +490,12 @@ namespace LabPresence.Helper
                 return (null, null);
 
             var gamemode = LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
+            var val = Gamemodes.HasTooltip(gamemode.Barcode) ? Gamemodes.GetValue(gamemode.Barcode) : string.Empty;
 
-            return (GetGamemodeKey(gamemode.Barcode), gamemode.Title);
+            if (Core.Config.ShowCustomGamemodeToolTips)
+                return (GetGamemodeKey(gamemode.Barcode), !string.IsNullOrWhiteSpace(val) ? $"{gamemode.Title} | {val}" : gamemode.Title);
+            else
+                return (GetGamemodeKey(gamemode.Barcode), gamemode.Title);
         }
 
         private static JsonDocument KnownGamemodesCache;

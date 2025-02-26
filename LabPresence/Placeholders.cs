@@ -31,16 +31,16 @@ namespace LabPresence
             _Placeholders.Add(placeholder);
         }
 
-        public static void RegisterPlaceholder(string name, Func<string> function)
+        public static void RegisterPlaceholder(string name, Func<string[], string> function)
             => RegisterPlaceholder(new Placeholder(name, function));
 
-        public static void RegisterPlaceholder(string name, Func<string> function, params string[] aliases)
+        public static void RegisterPlaceholder(string name, Func<string[], string> function, params string[] aliases)
             => RegisterPlaceholder(new Placeholder(name, function, aliases));
 
-        public static void RegisterPlaceholder(string name, Func<string> function, float minimumDelay)
+        public static void RegisterPlaceholder(string name, Func<string[], string> function, float minimumDelay)
             => RegisterPlaceholder(new Placeholder(name, function, minimumDelay));
 
-        public static void RegisterPlaceholder(string name, Func<string> function, float minimumDelay, params string[] aliases)
+        public static void RegisterPlaceholder(string name, Func<string[], string> function, float minimumDelay, params string[] aliases)
             => RegisterPlaceholder(new Placeholder(name, function, minimumDelay, aliases));
 
         public static bool UnregisterPlaceholder(string name)
@@ -78,7 +78,7 @@ namespace LabPresence
             return [.. names];
         }
 
-        private const string PlaceholderRegex = @"(?'escaped'\\%{0}\\%)|(?'found'%{0}%)";
+        private const string PlaceholderRegex = @"\\%(?'escaped'{0})\\%|%(?'found'{0})(?:(?:\|)(?'arg'.*?))*(?<!\\)%";
 
         public static Placeholder[] GetPlaceholdersInString(this string text)
         {
@@ -132,8 +132,18 @@ namespace LabPresence
                             {
                                 try
                                 {
-                                    var replaced = placeholder.Value.Invoke();
-                                    return replaced;
+                                    if (match.Groups.ContainsKey("arg"))
+                                    {
+                                        var group = match.Groups["arg"];
+                                        string[] vals = new string[group.Captures.Count];
+                                        for (int i = 0; i < group.Captures.Count; i++)
+                                            vals[i] = group.Captures[i].Value;
+                                        return placeholder.Value.Invoke(vals);
+                                    }
+                                    else
+                                    {
+                                        return placeholder.Value.Invoke([]);
+                                    }
                                 }
                                 catch (Exception ex)
                                 {
@@ -178,7 +188,7 @@ namespace LabPresence
         /// <summary>
         /// Function which returns the value of the placeholder
         /// </summary>
-        public Func<string> Value { get; set; }
+        public Func<string[], string> Value { get; set; }
 
         /// <summary>
         /// Aliases which can be used instead of the Name
@@ -191,27 +201,27 @@ namespace LabPresence
         /// </summary>
         public float MinimalDelay { get; set; } = -1f;
 
-        public Placeholder(string name, Func<string> value)
+        public Placeholder(string name, Func<string[], string> value)
         {
             this.Name = name;
             this.Value = value;
         }
 
-        public Placeholder(string name, Func<string> value, float minimalDelay)
+        public Placeholder(string name, Func<string[], string> value, float minimalDelay)
         {
             this.Name = name;
             this.Value = value;
             this.MinimalDelay = minimalDelay;
         }
 
-        public Placeholder(string name, Func<string> value, params string[] aliases)
+        public Placeholder(string name, Func<string[], string> value, params string[] aliases)
         {
             this.Name = name;
             this.Value = value;
             this.Aliases = aliases ?? [];
         }
 
-        public Placeholder(string name, Func<string> value, float minimalDelay, params string[] aliases)
+        public Placeholder(string name, Func<string[], string> value, float minimalDelay, params string[] aliases)
         {
             this.Name = name;
             this.Value = value;

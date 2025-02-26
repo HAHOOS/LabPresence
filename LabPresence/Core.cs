@@ -23,7 +23,7 @@ using System.Collections;
 using BoneLib;
 using BoneLib.Notifications;
 using System.Reflection;
-using Il2CppSLZ.Marrow.Forklift;
+using System.Collections.Generic;
 
 namespace LabPresence
 {
@@ -280,17 +280,17 @@ namespace LabPresence
 
         private static void AddDefaultPlaceholders()
         {
-            Placeholders.RegisterPlaceholder("levelName", () => SceneStreamer.Session?.Level?.Title ?? "N/A");
-            Placeholders.RegisterPlaceholder("avatarName", () => Player.RigManager?.AvatarCrate?.Crate?.Title ?? "N/A");
-            Placeholders.RegisterPlaceholder("platform", () => MelonUtils.CurrentPlatform == (MelonPlatformAttribute.CompatiblePlatforms)3 ? "Quest" : "PCVR");
-            Placeholders.RegisterPlaceholder("mlVersion", () => AppDomain.CurrentDomain?.GetAssemblies()?.FirstOrDefault(x => x.GetName().Name == "MelonLoader")?.GetName()?.Version?.ToString() ?? "N/A");
-            Placeholders.RegisterPlaceholder("health", () => (Player.RigManager?.health?.curr_Health)?.ToString() ?? "0", 4f);
-            Placeholders.RegisterPlaceholder("maxHealth", () => (Player.RigManager?.health?.max_Health).ToString() ?? "0");
-            Placeholders.RegisterPlaceholder("healthPercentange", () => $"{MathF.Floor((Player.RigManager?.health?.curr_Health ?? 0) / (Player.RigManager?.health?.max_Health ?? 0))}%", 4f);
-            Placeholders.RegisterPlaceholder("fps", () => FPS.FramesPerSecond.ToString(), 4f);
-            Placeholders.RegisterPlaceholder("operatingSystem", () => SystemInfo.operatingSystem);
-            Placeholders.RegisterPlaceholder("codeModsCount", () => RegisteredMelons.Count.ToString());
-            Placeholders.RegisterPlaceholder("modsCount", () =>
+            Placeholders.RegisterPlaceholder("levelName", (_) => SceneStreamer.Session?.Level?.Title ?? "N/A");
+            Placeholders.RegisterPlaceholder("avatarName", (_) => Player.RigManager?.AvatarCrate?.Crate?.Title ?? "N/A");
+            Placeholders.RegisterPlaceholder("platform", (_) => MelonUtils.CurrentPlatform == (MelonPlatformAttribute.CompatiblePlatforms)3 ? "Quest" : "PCVR");
+            Placeholders.RegisterPlaceholder("mlVersion", (_) => AppDomain.CurrentDomain?.GetAssemblies()?.FirstOrDefault(x => x.GetName().Name == "MelonLoader")?.GetName()?.Version?.ToString() ?? "N/A");
+            Placeholders.RegisterPlaceholder("health", (_) => (Player.RigManager?.health?.curr_Health)?.ToString() ?? "0", 4f);
+            Placeholders.RegisterPlaceholder("maxHealth", (_) => (Player.RigManager?.health?.max_Health).ToString() ?? "0");
+            Placeholders.RegisterPlaceholder("healthPercentange", (_) => $"{MathF.Floor((Player.RigManager?.health?.curr_Health ?? 0) / (Player.RigManager?.health?.max_Health ?? 0))}%", 4f);
+            Placeholders.RegisterPlaceholder("fps", (_) => FPS.FramesPerSecond.ToString(), 4f);
+            Placeholders.RegisterPlaceholder("operatingSystem", (_) => SystemInfo.operatingSystem);
+            Placeholders.RegisterPlaceholder("codeModsCount", (_) => RegisteredMelons.Count.ToString());
+            Placeholders.RegisterPlaceholder("modsCount", (_) =>
             {
                 if (!AssetWarehouse.ready || AssetWarehouse.Instance == null)
                     return "0";
@@ -300,16 +300,43 @@ namespace LabPresence
 
             // Ammo
             // Not sure why would anyone wanna use this placeholder
-            Placeholders.RegisterPlaceholder("ammoLight", () => AmmoInventory.Instance?._groupCounts["light"].ToString() ?? "0", 4f);
-            Placeholders.RegisterPlaceholder("ammoMedium", () => AmmoInventory.Instance?._groupCounts["medium"].ToString() ?? "0", 4f);
-            Placeholders.RegisterPlaceholder("ammoHeavy", () => AmmoInventory.Instance?._groupCounts["heavy"].ToString() ?? "0", 4f);
+            Placeholders.RegisterPlaceholder("ammoLight", (_) => AmmoInventory.Instance?._groupCounts["light"].ToString() ?? "0", 4f);
+            Placeholders.RegisterPlaceholder("ammoMedium", (_) => AmmoInventory.Instance?._groupCounts["medium"].ToString() ?? "0", 4f);
+            Placeholders.RegisterPlaceholder("ammoHeavy", (_) => AmmoInventory.Instance?._groupCounts["heavy"].ToString() ?? "0", 4f);
 
             // Fusion placeholders
-            Placeholders.RegisterPlaceholder("fusion_lobbyName", () => Fusion.GetLobbyName());
-            Placeholders.RegisterPlaceholder("fusion_host", () => Fusion.GetHost());
-            Placeholders.RegisterPlaceholder("fusion_currentPlayers", () => Fusion.GetPlayerCount().current.ToString());
-            Placeholders.RegisterPlaceholder("fusion_maxPlayers", () => Fusion.GetPlayerCount().max.ToString());
-            Placeholders.RegisterPlaceholder("fusion_privacy", () => Enum.GetName(Fusion.GetPrivacy()).Replace("_", " "));
+            Placeholders.RegisterPlaceholder("fusion_lobbyName", (_) => Fusion.GetLobbyName());
+            Placeholders.RegisterPlaceholder("fusion_host", (_) => Fusion.GetHost());
+            Placeholders.RegisterPlaceholder("fusion_currentPlayers", (_) => Fusion.GetPlayerCount().current.ToString());
+            Placeholders.RegisterPlaceholder("fusion_maxPlayers", (_) => Fusion.GetPlayerCount().max.ToString());
+            Placeholders.RegisterPlaceholder("fusion_privacy", (_) => Enum.GetName(Fusion.GetPrivacy()).Replace("_", " "));
+            Placeholders.RegisterPlaceholder("fusion_team_playerCount", (args) =>
+            {
+                if (args == null || args.Length != 1)
+                    return "0";
+
+                if (!Fusion.IsGamemodeStarted)
+                    return "0";
+
+                return Fusion.GetTeamPlayerCount(args[^1]);
+            });
+
+            // Test placeholder
+            Placeholders.RegisterPlaceholder("test_multiply", (args) =>
+            {
+                if (args == null || args.Length == 0)
+                    return "0";
+
+                List<int> nums = [];
+                foreach (var item in args)
+                {
+                    if (int.TryParse(item, out int res))
+                        nums.Add(res);
+                }
+                int current = 1;
+                nums.ForEach(x => current *= x);
+                return current.ToString();
+            });
         }
 
         private static string Encrypt(string secret)
