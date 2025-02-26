@@ -310,16 +310,6 @@ namespace LabPresence
             Placeholders.RegisterPlaceholder("fusion_currentPlayers", (_) => Fusion.GetPlayerCount().current.ToString());
             Placeholders.RegisterPlaceholder("fusion_maxPlayers", (_) => Fusion.GetPlayerCount().max.ToString());
             Placeholders.RegisterPlaceholder("fusion_privacy", (_) => Enum.GetName(Fusion.GetPrivacy()).Replace("_", " "));
-            Placeholders.RegisterPlaceholder("fusion_team_playerCount", (args) =>
-            {
-                if (args == null || args.Length != 1)
-                    return "0";
-
-                if (!Fusion.IsGamemodeStarted)
-                    return "0";
-
-                return Fusion.GetTeamPlayerCount(args[^1]);
-            });
 
             // Test placeholder
             Placeholders.RegisterPlaceholder("test_multiply", (args) =>

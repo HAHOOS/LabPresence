@@ -454,31 +454,6 @@ namespace LabPresence.Helper
                 RPC.SetTimestampStartToNow();
         }
 
-        public static string GetTeamPlayerCount(string team)
-        {
-            if (!IsConnected) return "0";
-            else return Internal_GetTeamPlayerCount(team);
-        }
-
-        private static string Internal_GetTeamPlayerCount(string team)
-        {
-            if (!LabFusion.SDK.Gamemodes.GamemodeManager.IsGamemodeStarted)
-                return "0";
-
-            if (LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode == null)
-                return "0";
-
-            var gamemode = LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
-            int count = 0;
-            foreach (var plr in LabFusion.Player.PlayerIdManager.PlayerIds)
-            {
-                var key = LabFusion.SDK.Metadata.KeyHelper.GetKeyFromPlayer(LabFusion.SDK.Metadata.CommonKeys.TeamKey, plr);
-                if (gamemode.Metadata.TryGetMetadata(key, out string val) && !string.IsNullOrWhiteSpace(val) && val == team)
-                    count++;
-            }
-            return count.ToString();
-        }
-
         public static (string key, string tooltip) GetGamemodeRPC()
         {
             if (!IsConnected) return (null, null);
