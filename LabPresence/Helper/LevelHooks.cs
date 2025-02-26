@@ -39,6 +39,7 @@ namespace LabPresence.Helper
         }
         */
 
+        // TODO: Improve to not check every frame for changes
         internal static void OnUpdate()
         {
             if (!MarrowGame.IsInitialized)
