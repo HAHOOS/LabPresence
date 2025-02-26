@@ -136,7 +136,11 @@ namespace LabPresence.Helper
 
         private static string Internal_GetLobbyCode()
         {
-            return LabFusion.Network.NetworkHelper.GetServerCode();
+            var lobbyInfo = LabFusion.Network.LobbyInfoManager.LobbyInfo;
+            if (lobbyInfo == null)
+                return string.Empty;
+
+            return lobbyInfo.LobbyCode;
         }
 
         public static string GetCurrentNetworkLayerTitle()
@@ -185,7 +189,7 @@ namespace LabPresence.Helper
             if (host == null)
                 return true;
 
-            if (host.PlayerId?.Metadata?.GetMetadata(AllowKey) == null)
+            if (string.IsNullOrWhiteSpace(host.PlayerId?.Metadata?.GetMetadata(AllowKey)))
                 return true;
 
             return host.PlayerId?.Metadata?.GetMetadata(AllowKey) == bool.TrueString;

@@ -400,7 +400,7 @@ namespace LabPresence
             if (Fusion.GetPrivacy() == Fusion.ServerPrivacy.Locked)
                 return null;
 
-            if (!Fusion.IsAllowedToInvite())
+            if (Fusion.GetPrivacy() != Fusion.ServerPrivacy.Public && !Fusion.IsAllowedToInvite())
                 return null;
 
             var layer = Fusion.GetCurrentNetworkLayerTitle();
