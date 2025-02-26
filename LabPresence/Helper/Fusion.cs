@@ -387,7 +387,7 @@ namespace LabPresence.Helper
             LabFusion.Utilities.MultiplayerHooking.OnJoinServer += SetTimestamp;
             LabFusion.Utilities.MultiplayerHooking.OnStartServer += SetTimestamp;
 
-            Gamemodes.RegisterTooltip("Lakatrazz.Hide And Seek", () =>
+            Gamemodes.RegisterGamemode("Lakatrazz.Hide And Seek", () =>
             {
                 if (LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode?.Barcode != "Lakatrazz.Hide And Seek")
                     return string.Empty;
@@ -395,7 +395,7 @@ namespace LabPresence.Helper
                 var gamemode = (LabFusion.SDK.Gamemodes.HideAndSeek)LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
                 return $"{gamemode.HiderTeam.PlayerCount} hiders left!";
             });
-            Gamemodes.RegisterTooltip("Lakatrazz.Deathmatch", () =>
+            Gamemodes.RegisterGamemode("Lakatrazz.Deathmatch", () =>
             {
                 if (LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode?.Barcode != "Lakatrazz.Deathmatch")
                     return string.Empty;
@@ -404,12 +404,12 @@ namespace LabPresence.Helper
                 var id = LabFusion.Player.PlayerIdManager.LocalId;
 
                 List<LabFusion.Player.PlayerId> plrs = [.. LabFusion.Player.PlayerIdManager.PlayerIds];
-                plrs = [.. plrs.OrderBy(x => gamemode.ScoreKeeper.GetScore(id))];
+                plrs = [.. plrs.OrderBy(x => gamemode.ScoreKeeper.GetScore(x))];
                 plrs.Reverse();
 
                 return $"#{plrs.FindIndex(x => x.IsMe) + 1} place with {gamemode.ScoreKeeper.GetScore(id)} points!";
             });
-            Gamemodes.RegisterTooltip("Lakatrazz.Team Deathmatch", () =>
+            Gamemodes.RegisterGamemode("Lakatrazz.Team Deathmatch", () =>
             {
                 if (LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode?.Barcode != "Lakatrazz.Team Deathmatch")
                     return string.Empty;
@@ -420,7 +420,7 @@ namespace LabPresence.Helper
                 var otherScore = gamemode.ScoreKeeper.GetTotalScore() - score;
                 return $"Team {Core.RemoveUnityRichText(localPlayer.DisplayName)} with {score} points and {(score > otherScore ? "winning!" : otherScore > score ? "losing :(" : "neither winning or losing..")}";
             });
-            Gamemodes.RegisterTooltip("Lakatrazz.Entangled", () =>
+            Gamemodes.RegisterGamemode("Lakatrazz.Entangled", () =>
             {
                 if (LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode?.Barcode != "Lakatrazz.Entangled")
                     return string.Empty;
@@ -454,6 +454,29 @@ namespace LabPresence.Helper
                 RPC.SetTimestampStartToNow();
         }
 
+        public static Timestamp GetGamemodeOverrideTime()
+        {
+            if (!IsConnected) return null;
+            else return Internal_GetGamemodeOverrideTime();
+        }
+
+        private static Timestamp Internal_GetGamemodeOverrideTime()
+        {
+            if (!LabFusion.SDK.Gamemodes.GamemodeManager.IsGamemodeStarted)
+                return null;
+
+            if (LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode == null)
+                return null;
+
+            var gamemode = LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
+            var registered = Gamemodes.GetGamemode(gamemode.Barcode);
+
+            if (registered?.OverrideTime == null)
+                return null;
+
+            return registered.GetOverrideTime();
+        }
+
         public static (string key, string tooltip) GetGamemodeRPC()
         {
             if (!IsConnected) return (null, null);
@@ -469,7 +492,8 @@ namespace LabPresence.Helper
                 return (null, null);
 
             var gamemode = LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
-            var val = Gamemodes.HasTooltip(gamemode.Barcode) ? Gamemodes.GetValue(gamemode.Barcode) : string.Empty;
+            var registered = Gamemodes.GetGamemode(gamemode.Barcode);
+            var val = registered?.CustomToolTip != null ? registered.GetToolTipValue() : string.Empty;
 
             if (Core.Config.ShowCustomGamemodeToolTips)
                 return (GetGamemodeKey(gamemode.Barcode), !string.IsNullOrWhiteSpace(val) ? $"{gamemode.Title} | {val}" : gamemode.Title);

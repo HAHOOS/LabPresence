@@ -15,28 +15,24 @@ namespace LabPresence
     {
         public static RPCConfig CurrentConfig { get; private set; }
 
-        public static Timestamps Timestamps { get; private set; }
+        public static Timestamp Timestamp { get; private set; }
 
-        public static void SetTimestamp(ulong? start, ulong? end, bool autoUpdate = false)
+        public static void SetTimestamp(Timestamp timestamp, bool autoUpdate = false)
         {
-            Timestamps ??= new Timestamps();
-            Timestamps.StartUnixMilliseconds = start;
-            Timestamps.EndUnixMilliseconds = end;
+            Timestamp = timestamp;
 
             if (Core.Client.CurrentPresence != null && autoUpdate)
-                Core.Client.Update(x => x.Timestamps = Timestamps);
+                Core.Client.Update(x => x.Timestamps = Timestamp.ToRPC());
         }
+
+        public static void SetTimestamp(ulong? start, ulong? end, bool autoUpdate = false)
+            => SetTimestamp(new(start, end), autoUpdate);
 
         public static void SetTimestampStartToNow(bool autoUpdate = false)
-            => RPC.SetTimestamp((ulong)DateTimeOffset.Now.ToUnixTimeMilliseconds(), null, autoUpdate);
+            => SetTimestamp(LabPresence.Timestamp.Now(), autoUpdate);
 
         public static void SetTimestampToCurrentTime(bool autoUpdate = false)
-        {
-            var now = DateTimeOffset.Now;
-            var timeSpan = new TimeSpan(0, now.Hour, now.Minute, now.Second, now.Millisecond);
-            var substracted = now.Subtract(timeSpan);
-            RPC.SetTimestamp((ulong)substracted.ToUnixTimeMilliseconds(), null, autoUpdate);
-        }
+            => SetTimestamp(LabPresence.Timestamp.CurrentTime(), autoUpdate);
 
         public static void SetRPC(string details, string state, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
         {
@@ -47,7 +43,7 @@ namespace LabPresence
             {
                 Details = Core.RemoveUnityRichText(details?.ApplyPlaceholders()),
                 State = Core.RemoveUnityRichText(state?.ApplyPlaceholders()),
-                Timestamps = Timestamps,
+                Timestamps = Fusion.GetGamemodeOverrideTime()?.ToRPC() ?? Timestamp?.ToRPC(),
                 Type = type,
                 Assets = new DiscordRPC.Assets()
                 {
@@ -101,5 +97,40 @@ namespace LabPresence
 
             return texture;
         }
+    }
+
+    public class Timestamp(ulong? start, ulong? end)
+    {
+        public ulong? Start { get; private set; } = start;
+
+        public ulong? End { get; private set; } = end;
+
+        public static Timestamp FromNow(int days = 0, int hours = 0, int minutes = 0, int seconds = 0, int milliseconds = 0)
+        {
+            var now = DateTimeOffset.Now;
+            var end = now.Add(new TimeSpan(days, hours, minutes, seconds, milliseconds));
+            return new((ulong)now.ToUnixTimeMilliseconds(), (ulong)end.ToUnixTimeMilliseconds());
+        }
+
+        public static Timestamp FromNow(TimeSpan span)
+        {
+            var now = DateTimeOffset.Now;
+            var end = now.Add(span);
+            return new((ulong)now.ToUnixTimeMilliseconds(), (ulong)end.ToUnixTimeMilliseconds());
+        }
+
+        public static Timestamp Now()
+            => new((ulong)DateTimeOffset.Now.ToUnixTimeMilliseconds(), null);
+
+        public static Timestamp CurrentTime()
+        {
+            var now = DateTimeOffset.Now;
+            var timeSpan = new TimeSpan(0, now.Hour, now.Minute, now.Second, now.Millisecond);
+            var substracted = now.Subtract(timeSpan);
+            return new((ulong)substracted.ToUnixTimeMilliseconds(), null);
+        }
+
+        public Timestamps ToRPC()
+            => new() { EndUnixMilliseconds = End, StartUnixMilliseconds = Start };
     }
 }

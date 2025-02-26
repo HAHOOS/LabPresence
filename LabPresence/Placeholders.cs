@@ -49,9 +49,9 @@ namespace LabPresence
                 throw new ArgumentNullException(nameof(name), "The name cannot be empty or null!");
 
             if (_Placeholders.Count == 0)
-                return true;
+                return false;
 
-            var index = _Placeholders.FindIndex(0, x => x.Name == name);
+            var index = _Placeholders.FindIndex(x => x.Name == name);
             if (index == -1)
                 return false;
 
