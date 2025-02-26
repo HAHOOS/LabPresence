@@ -1,6 +1,7 @@
 ﻿
 This file contains all of the default placeholders that you can use to make your Rich Presence look even better!
 Note that the placeholders are case-sensitive
+If you want to escape a placeholder, write for example \%test\% which in the result will give %test%
 
 =============================
 
