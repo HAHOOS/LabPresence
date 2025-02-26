@@ -4,7 +4,7 @@ using MelonLoader;
 
 #region MelonLoader
 
-[assembly: MelonInfo(typeof(LabPresence.Core), "LabPresence", "1.0.0", "HAHOOS", null)]
+[assembly: MelonInfo(typeof(LabPresence.Core), "LabPresence", LabPresence.Core.Version, "HAHOOS", "https://thunderstore.io/c/bonelab/p/HAHOOS/LabPresence/")]
 [assembly: MelonGame("Stress Level Zero", "BONELAB")]
 [assembly: MelonPriority(-1000)]
 [assembly: MelonOptionalDependencies("LabFusion")]
