@@ -280,7 +280,21 @@ namespace LabPresence
 
         private static void AddDefaultPlaceholders()
         {
-            Placeholders.RegisterPlaceholder("levelName", (_) => SceneStreamer.Session?.Level?.Title ?? "N/A");
+            Placeholders.RegisterPlaceholder("levelName", (args) =>
+            {
+                var level = SceneStreamer.Session?.Level?.Title;
+                if (level == null)
+                    return "N/A";
+
+                // The argument indicates if to remove numbers
+                if (args?.Length > 0 && args[0] == bool.FalseString)
+                    return level;
+
+                if (Config.RemoveLevelNumbers)
+                    level = RemoveBONELABLevelNumbers(level);
+
+                return level;
+            });
             Placeholders.RegisterPlaceholder("avatarName", (_) => Player.RigManager?.AvatarCrate?.Crate?.Title ?? "N/A");
             Placeholders.RegisterPlaceholder("platform", (_) => MelonUtils.CurrentPlatform == (MelonPlatformAttribute.CompatiblePlatforms)3 ? "Quest" : "PCVR");
             Placeholders.RegisterPlaceholder("mlVersion", (_) => AppDomain.CurrentDomain?.GetAssemblies()?.FirstOrDefault(x => x.GetName().Name == "MelonLoader")?.GetName()?.Version?.ToString() ?? "N/A");
@@ -358,6 +372,9 @@ namespace LabPresence
             if (string.IsNullOrWhiteSpace(text)) return text;
             return Regex.Replace(text, "<(.*?)>", string.Empty);
         }
+
+        public static string RemoveBONELABLevelNumbers(string levelName)
+            => Regex.Replace(levelName, "[0-9][0-9] - ", string.Empty);
 
         private static Party GetParty()
         {
@@ -450,7 +467,9 @@ namespace LabPresence
                     lastState = RPC.CurrentConfig.State;
                     delay = RPC.CurrentConfig.GetMinimumDelay();
                 }
-                if (_elapsedSeconds >= Math.Clamp(Config.RefreshDelay, delay, double.MaxValue))
+                var _delay = Math.Clamp(Config.RefreshDelay, delay, double.MaxValue);
+                _delay = Math.Clamp(_delay, Fusion.GetGamemodeMinimumDelay(), double.MaxValue);
+                if (_elapsedSeconds >= _delay)
                 {
                     _elapsedSeconds = 0;
 

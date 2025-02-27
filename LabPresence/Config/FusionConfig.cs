@@ -15,6 +15,10 @@ namespace LabPresence.Config
         [TomlProperty("AllowPlayersToInvite")]
         public bool AllowPlayersToInvite { get; set; } = true;
 
+        [TomlPrecedingComment("If true, gamemodes that support custom tooltips will display custom text on the small icon. Disabling this option will cause the tooltip to only show the name of the gamemode")]
+        [TomlProperty("ShowCustomGamemodeToolTips")]
+        public bool ShowCustomGamemodeToolTips { get; set; } = true;
+
         [TomlProperty("LevelLoaded")]
         public RPCConfig LevelLoaded { get; set; } = new("%levelName%", "%fusion_lobbyName%");
 

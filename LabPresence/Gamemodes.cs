@@ -30,11 +30,17 @@ namespace LabPresence
         public static void RegisterGamemode(string barcode, Func<string> customToolTip)
             => RegisterGamemode(new(barcode, customToolTip: customToolTip));
 
+        public static void RegisterGamemode(string barcode, float minimumDelay, Func<string> customToolTip)
+            => RegisterGamemode(new(barcode, minimumDelay: minimumDelay, customToolTip: customToolTip));
+
         public static void RegisterGamemode(string barcode, Func<Timestamp> overrideTime)
             => RegisterGamemode(new(barcode, overrideTime: overrideTime));
 
         public static void RegisterGamemode(string barcode, Func<string> customToolTip, Func<Timestamp> overrideTime)
             => RegisterGamemode(new(barcode, customToolTip: customToolTip, overrideTime: overrideTime));
+
+        public static void RegisterGamemode(string barcode, float minimumDelay, Func<string> customToolTip, Func<Timestamp> overrideTime)
+            => RegisterGamemode(new(barcode, minimumDelay: minimumDelay, customToolTip: customToolTip, overrideTime: overrideTime));
 
         public static bool UnregisterGamemode(string barcode)
         {
@@ -124,9 +130,11 @@ namespace LabPresence
             => GetOverrideTime(gamemode?.Barcode);
     }
 
-    public class Gamemode(string barcode, Func<string> customToolTip = null, Func<Timestamp> overrideTime = null)
+    public class Gamemode(string barcode, float minimumDelay = 0, Func<string> customToolTip = null, Func<Timestamp> overrideTime = null)
     {
         public string Barcode { get; } = barcode;
+
+        public float MinimumDelay { get; } = minimumDelay;
 
         public Func<string> CustomToolTip { get; } = customToolTip;
 

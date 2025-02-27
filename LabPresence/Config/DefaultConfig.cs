@@ -18,9 +18,9 @@ namespace LabPresence.Config
         [TomlProperty("TimeMode")]
         public TimeModeEnum TimeMode { get; set; } = TimeModeEnum.GameSession;
 
-        [TomlPrecedingComment("If true, gamemodes that support custom tooltips will display custom text on the small icon. Disabling this option will cause the tooltip to only show the name of the gamemode")]
-        [TomlProperty("ShowCustomGamemodeToolTips")]
-        public bool ShowCustomGamemodeToolTips { get; set; } = true;
+        [TomlPrecedingComment("If true, in for example '15 - Void G114' the '15 - ' will be removed and only 'Void G114' will be shown in the %levelName% placeholder")]
+        [TomlProperty("RemoveLevelNumbers")]
+        public bool RemoveLevelNumbers { get; set; } = true;
 
         [TomlProperty("PreGameStarted")]
         public RPCConfig PreGameStarted { get; set; } = new("Game loading...", "%codeModsCount% melons");

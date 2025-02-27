@@ -477,6 +477,32 @@ namespace LabPresence.Helper
             return registered.GetOverrideTime();
         }
 
+        public static float GetGamemodeMinimumDelay()
+        {
+            if (!IsConnected) return 0;
+            else return Internal_GetGamemodeMinimumDelay();
+        }
+
+        private static float Internal_GetGamemodeMinimumDelay()
+        {
+            if (!LabFusion.SDK.Gamemodes.GamemodeManager.IsGamemodeStarted)
+                return 0;
+
+            var gamemode = LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
+            if (gamemode == null)
+                return 0;
+
+            var registered = Gamemodes.GetGamemode(gamemode.Barcode);
+            if (registered == null)
+                return 0;
+
+            var toolTip = registered.GetToolTipValue();
+            if (string.IsNullOrWhiteSpace(toolTip))
+                return 0;
+            else
+                return registered.MinimumDelay;
+        }
+
         public static (string key, string tooltip) GetGamemodeRPC()
         {
             if (!IsConnected) return (null, null);
@@ -495,7 +521,7 @@ namespace LabPresence.Helper
             var registered = Gamemodes.GetGamemode(gamemode.Barcode);
             var val = registered?.CustomToolTip != null ? registered.GetToolTipValue() : string.Empty;
 
-            if (Core.Config.ShowCustomGamemodeToolTips)
+            if (Core.FusionConfig.ShowCustomGamemodeToolTips)
                 return (GetGamemodeKey(gamemode.Barcode), !string.IsNullOrWhiteSpace(val) ? $"{gamemode.Title} | {val}" : gamemode.Title);
             else
                 return (GetGamemodeKey(gamemode.Barcode), gamemode.Title);
