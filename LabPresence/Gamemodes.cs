@@ -136,14 +136,12 @@ namespace LabPresence
         /// <summary>
         /// Get the amount of all registered gamemodes
         /// </summary>
-        /// <returns>Amount of all registered gamemodes</returns>
         public static int GetGamemodeCount()
             => _Gamemodes.Count;
 
         /// <summary>
         /// Get the barcodes of all registered gamemodes
         /// </summary>
-        /// <returns>Array with barcodes of all registered gamemodes</returns>
         public static string[] GetGamemodeBarcodes()
         {
             List<string> barcodes = [];
