@@ -260,6 +260,9 @@ namespace LabPresence
 
             AssetWarehouse.OnReady((Action)(() => RPC.SetRPC(Config.AssetWarehouseLoaded)));
 
+            var time = DateTime.Now;
+            lastDay = time.Day;
+
             if (Config.TimeMode != LabPresence.Config.DefaultConfig.TimeModeEnum.CurrentTime)
                 RPC.SetTimestampStartToNow();
             else
@@ -476,7 +479,7 @@ namespace LabPresence
 
             if (RPC.CurrentConfig != null)
             {
-                if (_elapsedSecondsDateCheck >= 7.5f)
+                if (_elapsedSecondsDateCheck >= 2f)
                 {
                     _elapsedSecondsDateCheck = 0;
                     if (Config.TimeMode == LabPresence.Config.DefaultConfig.TimeModeEnum.CurrentTime)
