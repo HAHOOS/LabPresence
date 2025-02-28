@@ -7,10 +7,17 @@ using LabPresence.Config;
 
 namespace LabPresence
 {
+    /// <summary>
+    /// Class responsible for handling placeholders
+    /// </summary>
     public static class Placeholders
     {
         private static readonly List<Placeholder> _Placeholders = [];
 
+        /// <summary>
+        /// Register a new placeholder
+        /// </summary>
+        /// <param name="placeholder"><see cref="Placeholder"/> to register</param>
         public static void RegisterPlaceholder(this Placeholder placeholder)
         {
             if (placeholder == null)
@@ -31,18 +38,48 @@ namespace LabPresence
             _Placeholders.Add(placeholder);
         }
 
+        /// <summary>
+        /// Register a new <see cref="Placeholder"/>
+        /// </summary>
+        /// <param name="name"><see cref="Placeholder.Name"/></param>
+        /// <param name="function"><see cref="Placeholder.Value"/></param>
         public static void RegisterPlaceholder(string name, Func<string[], string> function)
             => RegisterPlaceholder(new Placeholder(name, function));
 
+        /// <summary>
+        /// Register a new <see cref="Placeholder"/>
+        /// </summary>
+        /// <param name="name"><see cref="Placeholder.Name"/></param>
+        /// <param name="function"><see cref="Placeholder.Value"/></param>
+        /// <param name="aliases"><see cref="Placeholder.Aliases"/></param>
         public static void RegisterPlaceholder(string name, Func<string[], string> function, params string[] aliases)
             => RegisterPlaceholder(new Placeholder(name, function, aliases));
 
+        /// <summary>
+        /// Register a new <see cref="Placeholder"/>
+        /// </summary>
+        /// <param name="name"><see cref="Placeholder.Name"/></param>
+        /// <param name="function"><see cref="Placeholder.Value"/></param>
+        /// <param name="minimumDelay"><see cref="Placeholder.MinimalDelay"/></param>
         public static void RegisterPlaceholder(string name, Func<string[], string> function, float minimumDelay)
             => RegisterPlaceholder(new Placeholder(name, function, minimumDelay));
 
+        /// <summary>
+        /// Register a new <see cref="Placeholder"/>
+        /// </summary>
+        /// <param name="name"><see cref="Placeholder.Name"/></param>
+        /// <param name="function"><see cref="Placeholder.Value"/></param>
+        /// <param name="minimumDelay"><see cref="Placeholder.MinimalDelay"/></param>
+        /// <param name="aliases"><see cref="Placeholder.Aliases"/></param>
         public static void RegisterPlaceholder(string name, Func<string[], string> function, float minimumDelay, params string[] aliases)
             => RegisterPlaceholder(new Placeholder(name, function, minimumDelay, aliases));
 
+        /// <summary>
+        /// Unregister a <see cref="Placeholder"/>
+        /// </summary>
+        /// <param name="name">The name of the <see cref="Placeholder"/></param>
+        /// <returns>Was the placeholder removed successfully</returns>
+        /// <exception cref="ArgumentNullException">The name cannot be empty or null!</exception>
         public static bool UnregisterPlaceholder(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -59,18 +96,38 @@ namespace LabPresence
             return true;
         }
 
+        /// <summary>
+        /// Unregister a <see cref="Placeholder"/>
+        /// </summary>
+        /// <param name="placeholder">The <see cref="Placeholder"/> to unregister</param>
+        /// <returns>Was the placeholder removed successfully</returns>
+        /// <exception cref="ArgumentNullException">The name cannot be empty or null!</exception>
         public static bool UnregisterPlaceholder(this Placeholder placeholder)
             => UnregisterPlaceholder(placeholder?.Name);
 
+        /// <summary>
+        /// Checks if a placeholder is registered
+        /// </summary>
+        /// <param name="name">Name of the <see cref="Placeholder"/></param>
         public static bool IsPlaceholderRegistered(string name)
             => _Placeholders.Any(x => x.Name == name);
 
+        /// <summary>
+        /// Checks if a placeholder is registered
+        /// </summary>
+        /// <param name="placeholder">The <see cref="Placeholder"/> to check</param>
         public static bool IsPlaceholderRegistered(this Placeholder placeholder)
             => IsPlaceholderRegistered(placeholder?.Name);
 
+        /// <summary>
+        /// Get the amount of registered placeholders
+        /// </summary>
         public static int GetPlaceholderCount()
             => _Placeholders.Count;
 
+        /// <summary>
+        /// Get the names of all registered placeholders
+        /// </summary>
         public static string[] GetPlaceholderNames()
         {
             List<string> names = [];
@@ -80,6 +137,10 @@ namespace LabPresence
 
         private const string PlaceholderRegex = @"\\%(?'escaped'{0})\\%|%(?'found'{0})(?:(?:\|)(?'arg'.*?))*(?<!\\)%";
 
+        /// <summary>
+        /// Get all the placeholders present in a string
+        /// </summary>
+        /// <param name="text">The text to check</param>
         public static Placeholder[] GetPlaceholdersInString(this string text)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -107,6 +168,11 @@ namespace LabPresence
             return [.. found];
         }
 
+        /// <summary>
+        /// Apply placeholders in a text
+        /// </summary>
+        /// <param name="text">The text to apply the placeholders to</param>
+        /// <returns>Text with applied placeholders</returns>
         public static string ApplyPlaceholders(this string text)
         {
             foreach (var placeholder in _Placeholders)
@@ -159,6 +225,11 @@ namespace LabPresence
             return text;
         }
 
+        /// <summary>
+        /// Get the minimum delay for a config
+        /// </summary>
+        /// <param name="config">The config to get the delay of</param>
+        /// <exception cref="ArgumentNullException">The config is null</exception>
         public static float GetMinimumDelay(this RPCConfig config)
         {
             if (config == null)
@@ -177,6 +248,9 @@ namespace LabPresence
         }
     }
 
+    /// <summary>
+    /// A placeholder to be used in <see cref="Placeholders"/>
+    /// </summary>
     public class Placeholder
     {
         /// <summary>
@@ -201,12 +275,23 @@ namespace LabPresence
         /// </summary>
         public float MinimalDelay { get; set; } = -1f;
 
+        /// <summary>
+        /// Initializes a new instance of a <see cref="Placeholder"/>
+        /// </summary>
+        /// <param name="name"><inheritdoc cref="Name"/></param>
+        /// <param name="value"><inheritdoc cref="Value"/></param>
         public Placeholder(string name, Func<string[], string> value)
         {
             this.Name = name;
             this.Value = value;
         }
 
+        /// <summary>
+        /// Initializes a new instance of a <see cref="Placeholder"/>
+        /// </summary>
+        /// <param name="name"><inheritdoc cref="Name"/></param>
+        /// <param name="value"><inheritdoc cref="Value"/></param>
+        /// <param name="minimalDelay"><inheritdoc cref="MinimalDelay"/></param>
         public Placeholder(string name, Func<string[], string> value, float minimalDelay)
         {
             this.Name = name;
@@ -214,6 +299,12 @@ namespace LabPresence
             this.MinimalDelay = minimalDelay;
         }
 
+        /// <summary>
+        /// Initializes a new instance of a <see cref="Placeholder"/>
+        /// </summary>
+        /// <param name="name"><inheritdoc cref="Name"/></param>
+        /// <param name="value"><inheritdoc cref="Value"/></param>
+        /// <param name="aliases"><inheritdoc cref="Aliases"/></param>
         public Placeholder(string name, Func<string[], string> value, params string[] aliases)
         {
             this.Name = name;
@@ -221,6 +312,13 @@ namespace LabPresence
             this.Aliases = aliases ?? [];
         }
 
+        /// <summary>
+        /// Initializes a new instance of a <see cref="Placeholder"/>
+        /// </summary>
+        /// <param name="name"><inheritdoc cref="Name"/></param>
+        /// <param name="value"><inheritdoc cref="Value"/></param>
+        /// <param name="minimalDelay"><inheritdoc cref="MinimalDelay"/></param>
+        /// <param name="aliases"><inheritdoc cref="Aliases"/></param>
         public Placeholder(string name, Func<string[], string> value, float minimalDelay, params string[] aliases)
         {
             this.Name = name;

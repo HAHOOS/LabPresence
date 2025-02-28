@@ -27,10 +27,19 @@ using System.Collections.Generic;
 
 namespace LabPresence
 {
+    /// <summary>
+    /// Class that contains the core functionality
+    /// </summary>
     public class Core : MelonMod
     {
+        /// <summary>
+        /// Version of the mod
+        /// </summary>
         public const string Version = "1.1.0";
 
+        /// <summary>
+        /// The Discord RPC Client
+        /// </summary>
         public static DiscordRpcClient Client { get; private set; }
 
         private const string ClientID = "1338522973421965382";
@@ -45,6 +54,9 @@ namespace LabPresence
 
         internal static Config.FusionConfig FusionConfig => FusionCategory?.GetValue<LabPresence.Config.FusionConfig>();
 
+        /// <summary>
+        /// Runs when the melon gets initialized
+        /// </summary>
         public override void OnInitializeMelon()
         {
             if (HelperMethods.IsAndroid())
@@ -367,12 +379,22 @@ namespace LabPresence
 
         private static float _elapsedSecondsDateCheck = 0;
 
+        /// <summary>
+        /// Remove Unity Rich Text from provided text
+        /// </summary>
+        /// <param name="text">The text to remove the rich text from</param>
+        /// <returns>Text without Rich Text</returns>
         public static string RemoveUnityRichText(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
             return Regex.Replace(text, "<(.*?)>", string.Empty);
         }
 
+        /// <summary>
+        /// Remove the funny numbers from BONELAB level names (example: '15 - Void G114' will output 'Void G114')
+        /// </summary>
+        /// <param name="levelName">The name of the level</param>
+        /// <returns>Level name without the numbers</returns>
         public static string RemoveBONELABLevelNumbers(string levelName)
             => Regex.Replace(levelName, "[0-9][0-9] - ", string.Empty);
 
@@ -404,6 +426,10 @@ namespace LabPresence
             if (SceneStreamer.Session.Status == StreamStatus.LOADING)
                 return null;
 
+            var (current, max) = Fusion.GetPlayerCount();
+            if (current >= max)
+                return null;
+
             if (Fusion.GetPrivacy() == Fusion.ServerPrivacy.Locked)
                 return null;
 
@@ -432,6 +458,9 @@ namespace LabPresence
 
         private int lastDay = 0;
 
+        /// <summary>
+        /// Runs every frame
+        /// </summary>
         public override void OnUpdate()
         {
             base.OnUpdate();
@@ -486,6 +515,9 @@ namespace LabPresence
             }
         }
 
+        /// <summary>
+        /// Runs when application is quitting
+        /// </summary>
         public override void OnApplicationQuit()
         {
             Client?.ClearPresence();

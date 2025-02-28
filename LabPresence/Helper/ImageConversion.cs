@@ -7,6 +7,8 @@ using UnityEngine;
 
 namespace LabPresence.Helper
 {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
     public static class ImageConversion
     {
         static ImageConversion()
@@ -110,3 +112,5 @@ namespace LabPresence.Helper
         private readonly static LoadImageDelegate LoadImageDelegateField;
     }
 }
+
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member

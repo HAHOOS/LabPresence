@@ -206,16 +206,31 @@ namespace DiscordRPC.IO
                     Length == other.Length &&
                     Data == other.Data;
 
+        /// <summary>
+        /// Compares if the frame equals the other frame.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
         public override readonly bool Equals(object obj)
         {
             return obj is PipeFrame pipeFrame && Equals(pipeFrame);
         }
 
+        /// <summary>
+        /// Compares if the frame equals the other frame
+        /// </summary>
+        /// <param name="left">The first frame</param>
+        /// <param name="right">The second frame</param>
         public static bool operator ==(PipeFrame left, PipeFrame right)
         {
             return left.Equals(right);
         }
 
+        /// <summary>
+        /// Compares if the frame doesn't equal the other frame
+        /// </summary>
+        /// <param name="left">The first frame</param>
+        /// <param name="right">The second frame</param>
         public static bool operator !=(PipeFrame left, PipeFrame right)
         {
             return !(left == right);
