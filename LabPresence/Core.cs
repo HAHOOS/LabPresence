@@ -488,7 +488,7 @@ namespace LabPresence
                         if (now.Day != lastDay)
                         {
                             lastDay = now.Day;
-                            RPC.SetTimestampToCurrentTime();
+                            RPC.SetTimestampToCurrentTime(true);
                         }
                     }
                 }
