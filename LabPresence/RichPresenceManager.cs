@@ -212,7 +212,7 @@ namespace LabPresence
     }
 
     /// <summary>
-    /// Timestamp for the <see cref="RPC"/>
+    /// Timestamp for the <see cref="RichPresenceManager"/>
     /// </summary>
     /// <param name="start"><inheritdoc cref="Start"/></param>
     /// <param name="end"><inheritdoc cref="End"/></param>

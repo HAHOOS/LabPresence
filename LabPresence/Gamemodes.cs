@@ -244,7 +244,7 @@ namespace LabPresence
         public Func<string> CustomToolTip { get; } = customToolTip;
 
         /// <summary>
-        /// The function that overrides the <see cref="RPC.Timestamp"/> when the gamemode is active
+        /// The function that overrides the <see cref="RichPresenceManager.Timestamp"/> when the gamemode is active
         /// <para>Returning <see langword="null"/> will cause the override to not happen</para>
         /// </summary>
         public Func<Timestamp> OverrideTime { get; } = overrideTime;
