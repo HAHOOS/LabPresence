@@ -216,6 +216,9 @@ namespace LabPresence.Helper
 
         private static bool Internal_IsAllowedToInvite()
         {
+            if (!Core.FusionConfig.Joins)
+                return false;
+
             if (LabFusion.Network.NetworkInfo.IsServer)
                 return true;
 

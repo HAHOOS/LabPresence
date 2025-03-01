@@ -389,7 +389,9 @@ namespace LabPresence
         /// <returns>Text without Rich Text</returns>
         public static string RemoveUnityRichText(string text)
         {
-            if (string.IsNullOrWhiteSpace(text)) return text;
+            if (string.IsNullOrWhiteSpace(text))
+                return text;
+
             return Regex.Replace(text, "<(.*?)>", string.Empty);
         }
 
