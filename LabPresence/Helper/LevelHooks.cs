@@ -66,7 +66,7 @@ namespace LabPresence.Helper
             if (SceneStreamer.Session.Level == null)
                 return;
 
-            if (lastStatus?.UpToDate(SceneStreamer.Session.Level.Barcode.ID, SceneStreamer.Session.Status) != true)
+            if (lastStatus?.UpToDate(SceneStreamer.Session.Level, SceneStreamer.Session.Status) != true)
             {
                 try
                 {
@@ -94,5 +94,8 @@ namespace LabPresence.Helper
 
         internal bool UpToDate(string barcode, StreamStatus status)
             => Level?.Barcode?.ID == barcode && Status == status;
+
+        internal bool UpToDate(LevelCrate level, StreamStatus status)
+            => Level?.Barcode?.ID == level?.Barcode?.ID && Status == status;
     }
 }
