@@ -755,7 +755,9 @@ namespace DiscordRPC
         public PrivacySetting Privacy { get; set; }
 
         [JsonProperty("size", NullValueHandling = NullValueHandling.Ignore)]
+#pragma warning disable RCS1213 // Remove unused member declaration
         private int[] _size
+#pragma warning restore RCS1213 // Remove unused member declaration
         {
             get
             {
@@ -815,7 +817,7 @@ namespace DiscordRPC
                 if (!BaseRichPresence.ValidateString(value, out _url, 512, Encoding.UTF8))
                     throw new StringOutOfRangeException(512);
 
-                if (!Uri.TryCreate(_url, UriKind.Absolute, out var uriResult)) // || !(uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps))
+                if (!Uri.TryCreate(_url, UriKind.Absolute, out var _)) // || !(uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps))
                     throw new ArgumentException("Url must be a valid URI");
             }
         }

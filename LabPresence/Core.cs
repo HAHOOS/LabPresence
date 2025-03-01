@@ -242,33 +242,33 @@ namespace LabPresence
             LevelHooks.OnLevelLoaded += (_) =>
             {
                 if (Config.TimeMode == LabPresence.Config.DefaultConfig.TimeModeEnum.Level && !(Fusion.IsConnected && FusionConfig.OverrrideTimeToLobby))
-                    RPC.SetTimestampStartToNow();
+                    RichPresenceManager.SetTimestampStartToNow();
 
                 if (!Fusion.IsConnected)
-                    RPC.SetRPC(Config.LevelLoaded);
+                    RichPresenceManager.TrySetRichPresence(Config.LevelLoaded);
                 else
-                    RPC.SetRPC(FusionConfig.LevelLoaded);
+                    RichPresenceManager.TrySetRichPresence(FusionConfig.LevelLoaded);
             };
 
             LevelHooks.OnLevelLoading += (_) =>
             {
                 if (!Fusion.IsConnected)
-                    RPC.SetRPC(Config.LevelLoading);
+                    RichPresenceManager.TrySetRichPresence(Config.LevelLoading);
                 else
-                    RPC.SetRPC(FusionConfig.LevelLoading);
+                    RichPresenceManager.TrySetRichPresence(FusionConfig.LevelLoading);
             };
 
-            AssetWarehouse.OnReady((Action)(() => RPC.SetRPC(Config.AssetWarehouseLoaded)));
+            AssetWarehouse.OnReady((Action)(() => RichPresenceManager.TrySetRichPresence(Config.AssetWarehouseLoaded)));
 
             var time = DateTime.Now;
             lastDay = time.Day;
 
             if (Config.TimeMode != LabPresence.Config.DefaultConfig.TimeModeEnum.CurrentTime)
-                RPC.SetTimestampStartToNow();
+                RichPresenceManager.SetTimestampStartToNow();
             else
-                RPC.SetTimestampToCurrentTime();
+                RichPresenceManager.SetTimestampToCurrentTime();
 
-            RPC.SetRPC(Config.PreGameStarted);
+            RichPresenceManager.TrySetRichPresence(Config.PreGameStarted);
 
             LoggerInstance.Msg("Initialized.");
         }
@@ -477,7 +477,7 @@ namespace LabPresence
             _elapsedSeconds += Time.deltaTime;
             _elapsedSecondsDateCheck += Time.deltaTime;
 
-            if (RPC.CurrentConfig != null)
+            if (RichPresenceManager.CurrentConfig != null)
             {
                 if (_elapsedSecondsDateCheck >= 2f)
                 {
@@ -488,16 +488,16 @@ namespace LabPresence
                         if (now.Day != lastDay)
                         {
                             lastDay = now.Day;
-                            RPC.SetTimestampToCurrentTime(true);
+                            RichPresenceManager.SetTimestampToCurrentTime(true);
                         }
                     }
                 }
 
-                if (lastDetails != RPC.CurrentConfig.Details && lastState != RPC.CurrentConfig.State)
+                if (lastDetails != RichPresenceManager.CurrentConfig.Details && lastState != RichPresenceManager.CurrentConfig.State)
                 {
-                    lastDetails = RPC.CurrentConfig.Details;
-                    lastState = RPC.CurrentConfig.State;
-                    delay = RPC.CurrentConfig.GetMinimumDelay();
+                    lastDetails = RichPresenceManager.CurrentConfig.Details;
+                    lastState = RichPresenceManager.CurrentConfig.State;
+                    delay = RichPresenceManager.CurrentConfig.GetMinimumDelay();
                 }
                 var _delay = Math.Clamp(Config.RefreshDelay, delay, double.MaxValue);
                 _delay = Math.Clamp(_delay, Fusion.GetGamemodeMinimumDelay(), double.MaxValue);
@@ -507,12 +507,12 @@ namespace LabPresence
 
                     if (!Fusion.IsConnected)
                     {
-                        RPC.SetRPC(RPC.CurrentConfig);
+                        RichPresenceManager.TrySetRichPresence(RichPresenceManager.CurrentConfig);
                     }
                     else
                     {
                         var (key, tooltip) = Fusion.GetGamemodeRPC();
-                        RPC.SetRPC(RPC.CurrentConfig, ActivityType.Playing, GetParty(), GetSecrets(), key, tooltip);
+                        RichPresenceManager.TrySetRichPresence(RichPresenceManager.CurrentConfig, ActivityType.Playing, GetParty(), GetSecrets(), key, tooltip);
                     }
                 }
             }

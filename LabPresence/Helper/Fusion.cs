@@ -398,7 +398,7 @@ namespace LabPresence.Helper
 
             if (Core.FusionConfig?.ShowJoinRequestPopUp == true)
             {
-                Texture2D texture = RPC.GetAvatar(message.User) ?? new Texture2D(1, 1);
+                Texture2D texture = RichPresenceManager.GetAvatar(message.User) ?? new Texture2D(1, 1);
                 Notifier.Send(new Notification()
                 {
                     Title = "Join Request",
@@ -441,7 +441,8 @@ namespace LabPresence.Helper
                     return string.Empty;
 
                 var gamemode = (LabFusion.SDK.Gamemodes.HideAndSeek)LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
-                return $"{gamemode.HiderTeam.PlayerCount} hiders left!";
+                var team = gamemode.TeamManager.GetLocalTeam();
+                return $"{team?.DisplayName ?? "N/A"} | {gamemode.HiderTeam.PlayerCount} hiders left!";
             });
             Gamemodes.RegisterGamemode("Lakatrazz.Deathmatch", () =>
             {
@@ -491,7 +492,7 @@ namespace LabPresence.Helper
                     if (!LabFusion.Network.MetadataHelper.TryGetDisplayName(plr, out string name))
                         return "With no partner :(";
 
-                    return Core.RemoveUnityRichText(name);
+                    return $"Entangled with {Core.RemoveUnityRichText(name)}";
                 }
             });
         }
@@ -499,7 +500,7 @@ namespace LabPresence.Helper
         private static void SetTimestamp()
         {
             if (Core.FusionConfig.OverrrideTimeToLobby && Core.Config.TimeMode == Config.DefaultConfig.TimeModeEnum.Level)
-                RPC.SetTimestampStartToNow();
+                RichPresenceManager.SetTimestampStartToNow();
         }
 
         /// <summary>
@@ -623,12 +624,12 @@ namespace LabPresence.Helper
         private static void Update()
         {
             if (Core.Config.TimeMode == Config.DefaultConfig.TimeModeEnum.Level && Core.FusionConfig.OverrrideTimeToLobby && !IsConnected)
-                RPC.SetTimestampStartToNow();
+                RichPresenceManager.SetTimestampStartToNow();
 
-            if (RPC.CurrentConfig == Core.FusionConfig.LevelLoaded && !IsConnected)
-                RPC.SetRPC(Core.Config.LevelLoaded);
-            else if (RPC.CurrentConfig == Core.FusionConfig.LevelLoading && !IsConnected)
-                RPC.SetRPC(Core.Config.LevelLoading);
+            if (RichPresenceManager.CurrentConfig == Core.FusionConfig.LevelLoaded && !IsConnected)
+                RichPresenceManager.TrySetRichPresence(Core.Config.LevelLoaded);
+            else if (RichPresenceManager.CurrentConfig == Core.FusionConfig.LevelLoading && !IsConnected)
+                RichPresenceManager.TrySetRichPresence(Core.Config.LevelLoading);
         }
 
         /// <summary>

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Text;
 
 using DiscordRPC;
+using DiscordRPC.Exceptions;
 
 using LabPresence.Config;
 using LabPresence.Helper;
@@ -14,7 +16,7 @@ namespace LabPresence
     /// <summary>
     /// Class responsible for managing the Rich Presence
     /// </summary>
-    public static class RPC
+    public static class RichPresenceManager
     {
         /// <summary>
         /// The current Rich Presence configuration
@@ -72,15 +74,21 @@ namespace LabPresence
         /// <param name="secrets"><inheritdoc cref="Secrets"/></param>
         /// <param name="smallImageKey"><inheritdoc cref="Assets.SmallImageKey"/></param>
         /// <param name="smallImageTitle"><inheritdoc cref="Assets.SmallImageText"/></param>
-        private static void SetRPC(string details, string state, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
+        private static void SetRichPresence(string details, string state, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
         {
             if (Core.Client?.IsInitialized != true)
-                return;
+                throw new InvalidOperationException("The RPC client is not initialized!");
 
+            if (!RichPresence.ValidateString(Core.RemoveUnityRichText(details?.ApplyPlaceholders()), out string det, 128, Encoding.UTF8) ||
+                !RichPresence.ValidateString(Core.RemoveUnityRichText(state?.ApplyPlaceholders()), out string stat, 128, Encoding.UTF8) ||
+                !RichPresence.ValidateString(smallImageTitle, out string small, 128, Encoding.UTF8))
+            {
+                throw new StringOutOfRangeException("State, details and/or small image text are over 128 bytes which Rich Presence cannot handle, try to lower the amount of characters", 0, 128);
+            }
             Core.Client.SetPresence(new DiscordRPC.RichPresence()
             {
-                Details = Core.RemoveUnityRichText(details?.ApplyPlaceholders()),
-                State = Core.RemoveUnityRichText(state?.ApplyPlaceholders()),
+                Details = det,
+                State = stat,
                 Timestamps = Fusion.GetGamemodeOverrideTime()?.ToRPC() ?? Timestamp?.ToRPC(),
                 Type = type,
                 Assets = new DiscordRPC.Assets()
@@ -88,11 +96,63 @@ namespace LabPresence
                     LargeImageKey = "icon",
                     LargeImageText = "BONELAB",
                     SmallImageKey = smallImageKey,
-                    SmallImageText = smallImageTitle
+                    SmallImageText = small
                 },
                 Party = party,
                 Secrets = secrets,
             });
+        }
+
+        /// <summary>
+        /// Set the current Rich Presence without throwing exceptions
+        /// </summary>
+        /// <param name="details"><inheritdoc cref="RPCConfig.Details"/></param>
+        /// <param name="state"><inheritdoc cref="RPCConfig.State"/></param>
+        /// <param name="type"><inheritdoc cref="ActivityType"/></param>
+        /// <param name="party"><inheritdoc cref="Party"/></param>
+        /// <param name="secrets"><inheritdoc cref="Secrets"/></param>
+        /// <param name="smallImageKey"><inheritdoc cref="Assets.SmallImageKey"/></param>
+        /// <param name="smallImageTitle"><inheritdoc cref="Assets.SmallImageText"/></param>
+        /// <returns><see langword="true"/> if set rich presence successfully, otherwise <see langword="false"/></returns>
+        private static bool TrySetRichPresence(string details, string state, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
+        {
+            try
+            {
+                SetRichPresence(details, state, type, party, secrets, smallImageKey, smallImageTitle);
+                return true;
+            }
+            catch (StringOutOfRangeException)
+            {
+                Core.Logger.Error("State, Details and/or small image text are over 128 bytes which Rich Presence cannot handle, try to lower the amount of characters");
+            }
+            catch (InvalidOperationException)
+            {
+                Core.Logger.Error("The RPC client is not initialized!");
+            }
+            catch (Exception ex)
+            {
+                Core.Logger.Error($"An unexpected error has occurred while setting the rich presence, exception:\n{ex}");
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Set the current Rich Presence from a provided <see cref="RPCConfig"/> without throwing exceptions
+        /// </summary>
+        /// <param name="config">The <see cref="RPCConfig"/> to get the state and details from</param>
+        /// <param name="type"><inheritdoc cref="ActivityType"/></param>
+        /// <param name="party"><inheritdoc cref="Party"/></param>
+        /// <param name="secrets"><inheritdoc cref="Secrets"/></param>
+        /// <param name="smallImageKey"><inheritdoc cref="Assets.SmallImageKey"/></param>
+        /// <param name="smallImageTitle"><inheritdoc cref="Assets.SmallImageText"/></param>
+        /// <returns><see langword="true"/> if set rich presence successfully, otherwise <see langword="false"/>. Note that if config is set to not be used, <see langword="true"/> will be returned</returns>
+        public static bool TrySetRichPresence(RPCConfig config, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
+        {
+            if (!config.Use)
+                return true;
+
+            CurrentConfig = config;
+            return TrySetRichPresence(config.Details, config.State, type, party, secrets, smallImageKey, smallImageTitle);
         }
 
         /// <summary>
@@ -104,13 +164,13 @@ namespace LabPresence
         /// <param name="secrets"><inheritdoc cref="Secrets"/></param>
         /// <param name="smallImageKey"><inheritdoc cref="Assets.SmallImageKey"/></param>
         /// <param name="smallImageTitle"><inheritdoc cref="Assets.SmallImageText"/></param>
-        public static void SetRPC(RPCConfig config, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
+        public static void SetRichPresence(RPCConfig config, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
         {
             if (!config.Use)
                 return;
 
             CurrentConfig = config;
-            SetRPC(config.Details, config.State, type, party, secrets, smallImageKey, smallImageTitle);
+            SetRichPresence(config.Details, config.State, type, party, secrets, smallImageKey, smallImageTitle);
         }
 
         private static readonly Dictionary<ulong, Texture2D> _avatarCache = [];
