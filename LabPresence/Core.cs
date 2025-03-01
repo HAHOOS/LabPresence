@@ -104,9 +104,7 @@ namespace LabPresence
             }
 
             if (Config.RefreshDelay <= 0.1)
-            {
                 LoggerInstance.Error("Hey, calm down. You shouldn't be spamming Discord servers! Although most of the requests won't be sent because they are identical presences, still please make it higher");
-            }
 
             Fusion.Init();
 
@@ -435,10 +433,12 @@ namespace LabPresence
             if (current >= max)
                 return null;
 
-            if (Fusion.GetPrivacy() == Fusion.ServerPrivacy.Locked)
+            var privacy = Fusion.GetPrivacy();
+
+            if (privacy == Fusion.ServerPrivacy.Locked)
                 return null;
 
-            if (Fusion.GetPrivacy() != Fusion.ServerPrivacy.Public && !Fusion.IsAllowedToInvite())
+            if (privacy != Fusion.ServerPrivacy.Public && privacy != Fusion.ServerPrivacy.Friends_Only && !Fusion.IsAllowedToInvite())
                 return null;
 
             var layer = Fusion.GetCurrentNetworkLayerTitle();

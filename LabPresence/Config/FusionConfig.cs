@@ -22,9 +22,9 @@ namespace LabPresence.Config
         public bool ShowJoinRequestPopUp { get; set; } = true;
 
         /// <summary>
-        /// If <see langword="true"/>, when hosting a friends only / private server, players will be able to let others join the server through Discord
+        /// If <see langword="true"/>, when hosting a private server, players will be able to let others join the server through Discord
         /// </summary>
-        [TomlPrecedingComment("If true, when hosting a friends only / private server, players will be able to let others join the server through Discord")]
+        [TomlPrecedingComment("If true, when hosting a private server, players will be able to let others join the server through Discord")]
         [TomlProperty("AllowPlayersToInvite")]
         public bool AllowPlayersToInvite { get; set; } = true;
 
