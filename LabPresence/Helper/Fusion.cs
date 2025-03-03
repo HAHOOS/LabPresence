@@ -470,7 +470,7 @@ namespace LabPresence.Helper
                 var localPlayer = gamemode.TeamManager.GetLocalTeam();
                 var score = gamemode.ScoreKeeper.GetScore(localPlayer);
                 var otherScore = gamemode.ScoreKeeper.GetTotalScore() - score;
-                return $"Team {Core.RemoveUnityRichText(localPlayer.DisplayName)} with {score} points and {(score > otherScore ? "winning!" : otherScore > score ? "losing :(" : "neither winning or losing..")}";
+                return $"Team '{Core.RemoveUnityRichText(localPlayer.DisplayName)}' with {score} points and {(score > otherScore ? "winning!" : otherScore > score ? "losing :(" : "neither winning or losing..")}";
             });
             Gamemodes.RegisterGamemode("Lakatrazz.Entangled", () =>
             {
