@@ -16,14 +16,13 @@ using MelonLoader.Preferences;
 using System;
 using System.Linq;
 using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Collections;
 
 using BoneLib;
-using BoneLib.Notifications;
 using System.Reflection;
 using System.Collections.Generic;
+using LabPresence.Plugins.Default;
+using LabPresence.Plugins;
 
 namespace LabPresence
 {
@@ -48,11 +47,7 @@ namespace LabPresence
 
         internal static MelonPreferences_ReflectiveCategory Category { get; private set; }
 
-        internal static MelonPreferences_ReflectiveCategory FusionCategory { get; private set; }
-
         internal static Config.DefaultConfig Config => Category?.GetValue<LabPresence.Config.DefaultConfig>();
-
-        internal static Config.FusionConfig FusionConfig => FusionCategory?.GetValue<LabPresence.Config.FusionConfig>();
 
         /// <summary>
         /// Runs when the melon gets initialized
@@ -73,10 +68,6 @@ namespace LabPresence
             Category = MelonPreferences.CreateCategory<LabPresence.Config.DefaultConfig>("LabPresenceConfig", "Lab Presence Config");
             Category.SetFilePath(Path.Combine(dir.FullName, "default.cfg"), true, false);
             Category.SaveToFile(false);
-
-            FusionCategory = MelonPreferences.CreateCategory<LabPresence.Config.FusionConfig>("Fusion_LabPresenceConfig", "Fusion | Lab Presence Config");
-            FusionCategory.SetFilePath(Path.Combine(dir.FullName, "fusion.cfg"), true, false);
-            FusionCategory.SaveToFile(false);
 
             try
             {
@@ -106,8 +97,6 @@ namespace LabPresence
             if (Config.RefreshDelay <= 0.1)
                 LoggerInstance.Error("Hey, calm down. You shouldn't be spamming Discord servers! Although most of the requests won't be sent because they are identical presences, still please make it higher");
 
-            Fusion.Init();
-
             LoggerInstance.Msg("Adding placeholders");
 
             AddDefaultPlaceholders();
@@ -116,7 +105,7 @@ namespace LabPresence
 
             Client = new DiscordRpcClient(ClientID, autoEvents: false)
             {
-                Logger = new MLLogger(LoggerInstance, Config.RPCLogLevel)
+                Logger = new Logger(LoggerInstance, Config.RPCLogLevel, "RPC")
             };
 
             Client.OnReady += (_, e) =>
@@ -133,130 +122,41 @@ namespace LabPresence
             Client.OnConnectionFailed += (_, e) => LoggerInstance.Error($"Failed to establish connection with pipe {e.FailedPipe}");
             Client.OnError += (_, e) => LoggerInstance.Error($"An unexpected error has occurred when sending a message, error: {e.Message}");
 
-            Client.OnJoin += (_, e) =>
-            {
-                try
-                {
-                    LoggerInstance.Msg("Received Join Request");
-                    string decrypted = Decrypt(e.Secret);
-                    string[] split = decrypted.Split("|");
+            Client.OnJoin += (_, e) => Overwrites.OnJoin.Run(e);
+            Client.OnJoinRequested += (_, e) => Overwrites.OnJoinRequested.Run(e);
+            Client.OnSpectate += (_, e) => Overwrites.OnSpectate.Run(e);
 
-                    if (split.Length <= 1)
-                        throw new Exception("Secret provided to join the lobby did not include all of the necessary info");
-
-                    if (split.Length > 2)
-                        throw new Exception("Secret provided to join the lobby was invalid, the name of the network layer or code to the server may have contained the '|' character used to separate network layer & code, causing unexpected results");
-
-                    string layer = split[0];
-                    string code = split[1];
-
-                    void join()
-                    {
-                        LoggerInstance.Msg($"Attempting to join with the following code: {code}");
-                        if (code != Fusion.GetLobbyCode())
-                        {
-                            Notifier.Send(new Notification()
-                            {
-                                Title = "LabPresence",
-                                Message = "Attempting to join the target lobby, this might take a few seconds...",
-                                PopupLength = 4f,
-                                ShowTitleOnPopup = true,
-                                Type = NotificationType.Information
-                            });
-
-                            if (Fusion.EnsureNetworkLayer(layer))
-                            {
-                                Fusion.JoinByCode(code);
-                            }
-                            else
-                            {
-                                Notifier.Send(new Notification()
-                                {
-                                    Title = "Failure | LabPresence",
-                                    Message = "Failed to ensure network layer, check the console/logs for errors. If none are present, it's likely the user is playing on a network layer that you do not have.",
-                                    Type = NotificationType.Error,
-                                    PopupLength = 5f,
-                                    ShowTitleOnPopup = true,
-                                });
-                            }
-                        }
-                        else
-                        {
-                            LoggerInstance.Error("Player is already in the lobby");
-                            Notifier.Send(new Notification()
-                            {
-                                Title = "Failure | LabPresence",
-                                Message = "Could not join, because you are already in the lobby!",
-                                Type = NotificationType.Error,
-                                PopupLength = 5f,
-                                ShowTitleOnPopup = true,
-                            });
-                        }
-                    }
-
-                    MelonCoroutines.Start(AfterLevelLoaded(join));
-                }
-                catch (Exception ex)
-                {
-                    Notifier.Send(new Notification()
-                    {
-                        Title = "Failure | LabPresence",
-                        Message = "An unexpected error has occurred while trying to join the lobby, check the console or logs for more details",
-                        Type = NotificationType.Error,
-                        PopupLength = 5f,
-                        ShowTitleOnPopup = true,
-                    });
-                    LoggerInstance.Error($"An unexpected error has occurred while trying to join the lobby, exception:\n{ex}");
-                }
-            };
-
-            Client.OnJoinRequested += (_, e) =>
-            {
-                try
-                {
-                    LoggerInstance.Msg("Join requested");
-                    void after() => Fusion.JoinRequest(e);
-                    MelonCoroutines.Start(AfterLevelLoaded(after));
-                }
-                catch (Exception ex)
-                {
-                    Notifier.Send(new Notification()
-                    {
-                        Title = "Failure | LabPresence",
-                        Message = "An unexpected error has occurred while handling join request, check the console or logs for more details",
-                        Type = NotificationType.Error,
-                        PopupLength = 5f,
-                        ShowTitleOnPopup = true,
-                    });
-                    LoggerInstance.Error($"An unexpected error has occurred while handling join request, exception:\n{ex}");
-                }
-            };
             Client.SkipIdenticalPresence = true;
-            Client.SetSubscription(EventType.Join | EventType.JoinRequest);
+            Client.SetSubscription(EventType.Join | EventType.JoinRequest | EventType.Spectate);
 
             Client.Initialize();
+
+            Overwrites.OnLevelLoaded.SetDefault(() => RichPresenceManager.TrySetRichPresence(Config.LevelLoaded));
+            Overwrites.OnLevelLoading.SetDefault(() => RichPresenceManager.TrySetRichPresence(Config.LevelLoading));
+            Overwrites.OnAssetWarehouseLoaded.SetDefault(() => RichPresenceManager.TrySetRichPresence(Config.AssetWarehouseLoaded));
+            Overwrites.OnPreGame.SetDefault(() => RichPresenceManager.TrySetRichPresence(Config.PreGameStarted));
+            try
+            {
+                if (Fusion.HasFusion)
+                    PluginsManager.Register<FusionPlugin>();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"An unexpected error has occurred while attempting to register the Fusion Plugin, exception:\n{ex}");
+            }
 
             //LevelHooks.Init();
             LevelHooks.OnLevelLoaded += (_) =>
             {
-                if (Config.TimeMode == LabPresence.Config.DefaultConfig.TimeModeEnum.Level && !(Fusion.IsConnected && FusionConfig.OverrrideTimeToLobby))
+                if (Config.TimeMode == LabPresence.Config.DefaultConfig.TimeModeEnum.Level)
                     RichPresenceManager.SetTimestampStartToNow();
 
-                if (!Fusion.IsConnected)
-                    RichPresenceManager.TrySetRichPresence(Config.LevelLoaded);
-                else
-                    RichPresenceManager.TrySetRichPresence(FusionConfig.LevelLoaded);
+                Overwrites.OnLevelLoaded.Run();
             };
 
-            LevelHooks.OnLevelLoading += (_) =>
-            {
-                if (!Fusion.IsConnected)
-                    RichPresenceManager.TrySetRichPresence(Config.LevelLoading);
-                else
-                    RichPresenceManager.TrySetRichPresence(FusionConfig.LevelLoading);
-            };
+            LevelHooks.OnLevelLoading += (_) => Overwrites.OnLevelLoading.Run();
 
-            AssetWarehouse.OnReady((Action)(() => RichPresenceManager.TrySetRichPresence(Config.AssetWarehouseLoaded)));
+            AssetWarehouse.OnReady((Il2CppSystem.Action)Overwrites.OnAssetWarehouseLoaded.Run);
 
             var time = DateTime.Now;
             lastDay = time.Day;
@@ -266,17 +166,9 @@ namespace LabPresence
             else
                 RichPresenceManager.SetTimestampToCurrentTime();
 
-            RichPresenceManager.TrySetRichPresence(Config.PreGameStarted);
+            Overwrites.OnPreGame.Run();
 
             LoggerInstance.Msg("Initialized.");
-        }
-
-        private static IEnumerator AfterLevelLoaded(Action callback)
-        {
-            while (SceneStreamer.Session?.Status != StreamStatus.DONE)
-                yield return null;
-
-            callback?.Invoke();
         }
 
         private void RegisterURIScheme()
@@ -331,13 +223,6 @@ namespace LabPresence
             Placeholders.RegisterPlaceholder("ammoMedium", (_) => AmmoInventory.Instance?._groupCounts["medium"].ToString() ?? "0", 4f);
             Placeholders.RegisterPlaceholder("ammoHeavy", (_) => AmmoInventory.Instance?._groupCounts["heavy"].ToString() ?? "0", 4f);
 
-            // Fusion placeholders
-            Placeholders.RegisterPlaceholder("fusion_lobbyName", (_) => Fusion.GetLobbyName());
-            Placeholders.RegisterPlaceholder("fusion_host", (_) => Fusion.GetHost());
-            Placeholders.RegisterPlaceholder("fusion_currentPlayers", (_) => Fusion.GetPlayerCount().current.ToString());
-            Placeholders.RegisterPlaceholder("fusion_maxPlayers", (_) => Fusion.GetPlayerCount().max.ToString());
-            Placeholders.RegisterPlaceholder("fusion_privacy", (_) => Enum.GetName(Fusion.GetPrivacy()).Replace("_", " "));
-
             // Test placeholder
             Placeholders.RegisterPlaceholder("test_multiply", (args) =>
             {
@@ -355,28 +240,6 @@ namespace LabPresence
                 return current.ToString();
             });
         }
-
-        private static string Encrypt(string secret)
-        {
-            if (string.IsNullOrWhiteSpace(secret))
-                return string.Empty;
-            // Not the strongest but provides a bit of protection
-            // I mean Discord says to encrypt it so I mean yeah, I'm doing that
-            // Whatever
-            var bytes = Encoding.UTF8.GetBytes(secret);
-            return Convert.ToBase64String(bytes);
-        }
-
-        private static string Decrypt(string secret)
-        {
-            if (string.IsNullOrWhiteSpace(secret))
-                return string.Empty;
-
-            var bytes = Convert.FromBase64String(secret);
-            return Encoding.UTF8.GetString(bytes);
-        }
-
-        private static float _elapsedSeconds = 0;
 
         private static float _elapsedSecondsDateCheck = 0;
 
@@ -401,65 +264,9 @@ namespace LabPresence
         public static string RemoveBONELABLevelNumbers(string levelName)
             => Regex.Replace(levelName, "[0-9][0-9] - ", string.Empty);
 
-        private static Party GetParty()
-        {
-            if (!Fusion.IsConnected)
-                return null;
-
-            var id = Fusion.GetLobbyID();
-
-            // Discord requires the ID string to have at least 2 characters
-            if (id == 0 || id.ToString().Length < 2)
-                return null;
-
-            return new Party()
-            {
-                ID = Fusion.GetLobbyID().ToString(),
-                Privacy = Fusion.GetPrivacy() == Fusion.ServerPrivacy.Public ? Party.PrivacySetting.Public : Party.PrivacySetting.Private,
-                Max = Fusion.GetPlayerCount().max,
-                Size = Fusion.GetPlayerCount().current
-            };
-        }
-
-        private static Secrets GetSecrets()
-        {
-            if (!Fusion.IsConnected)
-                return null;
-
-            if (SceneStreamer.Session.Status == StreamStatus.LOADING)
-                return null;
-
-            var (current, max) = Fusion.GetPlayerCount();
-            if (current >= max)
-                return null;
-
-            var privacy = Fusion.GetPrivacy();
-
-            if (privacy == Fusion.ServerPrivacy.Locked)
-                return null;
-
-            if (privacy != Fusion.ServerPrivacy.Public && privacy != Fusion.ServerPrivacy.Friends_Only && !Fusion.IsAllowedToInvite())
-                return null;
-
-            var layer = Fusion.GetCurrentNetworkLayerTitle();
-            if (string.IsNullOrWhiteSpace(layer))
-                return null;
-
-            var code = Fusion.GetLobbyCode();
-            if (string.IsNullOrWhiteSpace(code))
-                return null;
-
-            var encrypted = Encrypt($"{layer}|{code}");
-
-            return new Secrets()
-            {
-                JoinSecret = encrypted
-            };
-        }
-
         private string lastState, lastDetails;
 
-        private float delay;
+        public static float RequiredDelay { get; set; }
 
         private int lastDay = 0;
 
@@ -469,14 +276,13 @@ namespace LabPresence
         public override void OnUpdate()
         {
             base.OnUpdate();
-            if (Client.IsInitialized)
+
+            if (Client?.IsInitialized == true)
                 Client?.Invoke();
+
             FPS.OnUpdate();
             LevelHooks.OnUpdate();
-            if (FusionConfig != null)
-                Fusion.EnsureMetaDataSync();
 
-            _elapsedSeconds += Time.deltaTime;
             _elapsedSecondsDateCheck += Time.deltaTime;
 
             if (RichPresenceManager.CurrentConfig != null)
@@ -499,23 +305,7 @@ namespace LabPresence
                 {
                     lastDetails = RichPresenceManager.CurrentConfig.Details;
                     lastState = RichPresenceManager.CurrentConfig.State;
-                    delay = RichPresenceManager.CurrentConfig.GetMinimumDelay();
-                }
-                var _delay = Math.Clamp(Config.RefreshDelay, delay, double.MaxValue);
-                _delay = Math.Clamp(_delay, Fusion.GetGamemodeMinimumDelay(), double.MaxValue);
-                if (_elapsedSeconds >= _delay)
-                {
-                    _elapsedSeconds = 0;
-
-                    if (!Fusion.IsConnected)
-                    {
-                        RichPresenceManager.TrySetRichPresence(RichPresenceManager.CurrentConfig);
-                    }
-                    else
-                    {
-                        var (key, tooltip) = Fusion.GetGamemodeRPC();
-                        RichPresenceManager.TrySetRichPresence(RichPresenceManager.CurrentConfig, ActivityType.Playing, GetParty(), GetSecrets(), key, tooltip);
-                    }
+                    RequiredDelay = RichPresenceManager.CurrentConfig.GetMinimumDelay();
                 }
             }
         }

@@ -135,6 +135,7 @@ namespace LabPresence
             return [.. names];
         }
 
+        // Now when I look at this, I don't really know why I bothered to overcomplicate it so much. Probably, because I had too much free time.
         private const string PlaceholderRegex = @"\\%(?'escaped'{0})\\%|%(?'found'{0})(?:(?:\|)(?'arg'.*?))*(?<!\\)%";
 
         /// <summary>

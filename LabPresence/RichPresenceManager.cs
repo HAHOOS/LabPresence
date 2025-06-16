@@ -29,6 +29,11 @@ namespace LabPresence
         public static Timestamp Timestamp { get; private set; }
 
         /// <summary>
+        /// The timestamp that will be used to override <see cref="Timestamp"/>, if <see langword="null"/> <see cref="Timestamp"/> will be used in the presence
+        /// </summary>
+        public static TimestampOverride OverrideTimestamp { get; private set; }
+
+        /// <summary>
         /// Set the timestamp for the Rich Presence
         /// </summary>
         /// <param name="timestamp">The <see cref="LabPresence.Timestamp"/> to set</param>
@@ -37,8 +42,17 @@ namespace LabPresence
         {
             Timestamp = timestamp;
 
-            if (Core.Client.CurrentPresence != null && autoUpdate)
-                Core.Client.Update(x => x.Timestamps = Timestamp.ToRPC());
+            if (autoUpdate)
+                UpdateTimestamp();
+        }
+
+        /// <summary>
+        /// Updates the timestamp on the Rich Presence to be up to date with current config
+        /// </summary>
+        public static void UpdateTimestamp()
+        {
+            if (Core.Client.CurrentPresence != null)
+                Core.Client.Update(x => x.Timestamps = OverrideTimestamp != null ? OverrideTimestamp?.Timestamp?.ToRPC() : Timestamp.ToRPC());
         }
 
         /// <summary>
@@ -65,6 +79,27 @@ namespace LabPresence
             => SetTimestamp(LabPresence.Timestamp.CurrentTime, autoUpdate);
 
         /// <summary>
+        /// Set the <see cref="OverrideTimestamp"/>
+        /// </summary>
+        /// <param name="timestamp">The <see cref="LabPresence.Timestamp"/> to set</param>
+        /// <param name="autoUpdate">Should the timestamp be automatically updated</param>
+        public static void SetOverrideTimestamp(TimestampOverride timestamp, bool autoUpdate = false)
+        {
+            OverrideTimestamp = timestamp;
+            if (autoUpdate) UpdateTimestamp();
+        }
+
+        /// <summary>
+        /// Reset the <see cref="OverrideTimestamp"/>
+        /// </summary>
+        /// <param name="autoUpdate">Should the timestamp be automatically updated</param>
+        public static void ResetOverrideTimestamp(bool autoUpdate = false)
+        {
+            OverrideTimestamp = null;
+            if (autoUpdate) UpdateTimestamp();
+        }
+
+        /// <summary>
         /// Set the current Rich Presence
         /// </summary>
         /// <param name="details"><inheritdoc cref="RPCConfig.Details"/></param>
@@ -72,35 +107,42 @@ namespace LabPresence
         /// <param name="type"><inheritdoc cref="ActivityType"/></param>
         /// <param name="party"><inheritdoc cref="Party"/></param>
         /// <param name="secrets"><inheritdoc cref="Secrets"/></param>
-        /// <param name="smallImageKey"><inheritdoc cref="Assets.SmallImageKey"/></param>
-        /// <param name="smallImageTitle"><inheritdoc cref="Assets.SmallImageText"/></param>
-        private static void SetRichPresence(string details, string state, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
+        /// <param name="largeImage">The large image that appears as the main image in the Rich Presence. If <see langword="null"/>, will use BONELAB logo</param>
+        /// <param name="smallImage">The small image that appears as the image in the down right corner in the Rich Presence. If <see langword="null"/>, it won't be displayed</param>
+        private static void SetRichPresence(string details, string state, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, Asset largeImage = null, Asset smallImage = null)
         {
             if (Core.Client?.IsInitialized != true)
                 throw new InvalidOperationException("The RPC client is not initialized!");
 
+            largeImage ??= new("icon", "BONELAB");
             if (!RichPresence.ValidateString(Core.RemoveUnityRichText(details?.ApplyPlaceholders()), out string det, 128, Encoding.UTF8) ||
                 !RichPresence.ValidateString(Core.RemoveUnityRichText(state?.ApplyPlaceholders()), out string stat, 128, Encoding.UTF8) ||
-                !RichPresence.ValidateString(smallImageTitle, out string small, 128, Encoding.UTF8))
+                !RichPresence.ValidateString(largeImage.ToolTip, out _, 128, Encoding.UTF8) ||
+                !RichPresence.ValidateString(smallImage?.ToolTip, out _, 128, Encoding.UTF8))
             {
-                throw new StringOutOfRangeException("State, details and/or small image text are over 128 bytes which Rich Presence cannot handle, try to lower the amount of characters", 0, 128);
+                throw new StringOutOfRangeException("State, Details and/or an asset tooltip is/are over 128 bytes which Rich Presence cannot handle, try to lower the amount of characters", 0, 128);
             }
             Core.Client.SetPresence(new DiscordRPC.RichPresence()
             {
                 Details = det,
                 State = stat,
-                Timestamps = Fusion.GetGamemodeOverrideTime()?.ToRPC() ?? Timestamp?.ToRPC(),
+                Timestamps = OverrideTimestamp?.Timestamp?.ToRPC() ?? Timestamp?.ToRPC(),
                 Type = type,
-                Assets = new DiscordRPC.Assets()
-                {
-                    LargeImageKey = "icon",
-                    LargeImageText = "BONELAB",
-                    SmallImageKey = smallImageKey,
-                    SmallImageText = small
-                },
+                Assets = CreateAssets(largeImage, smallImage),
                 Party = party,
                 Secrets = secrets,
             });
+        }
+
+        private static Assets CreateAssets(Asset largeImage, Asset smallImage)
+        {
+            return new Assets()
+            {
+                LargeImageKey = largeImage?.Key,
+                LargeImageText = largeImage?.ToolTip,
+                SmallImageKey = smallImage?.Key,
+                SmallImageText = smallImage?.ToolTip,
+            };
         }
 
         /// <summary>
@@ -111,19 +153,19 @@ namespace LabPresence
         /// <param name="type"><inheritdoc cref="ActivityType"/></param>
         /// <param name="party"><inheritdoc cref="Party"/></param>
         /// <param name="secrets"><inheritdoc cref="Secrets"/></param>
-        /// <param name="smallImageKey"><inheritdoc cref="Assets.SmallImageKey"/></param>
-        /// <param name="smallImageTitle"><inheritdoc cref="Assets.SmallImageText"/></param>
+        /// <param name="largeImage">The large image that appears as the main image in the Rich Presence. If <see langword="null"/>, will use BONELAB logo</param>
+        /// <param name="smallImage">The small image that appears as the image in the down right corner in the Rich Presence. If <see langword="null"/>, it won't be displayed</param>
         /// <returns><see langword="true"/> if set rich presence successfully, otherwise <see langword="false"/></returns>
-        private static bool TrySetRichPresence(string details, string state, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
+        private static bool TrySetRichPresence(string details, string state, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, Asset largeImage = null, Asset smallImage = null)
         {
             try
             {
-                SetRichPresence(details, state, type, party, secrets, smallImageKey, smallImageTitle);
+                SetRichPresence(details, state, type, party, secrets, largeImage, smallImage);
                 return true;
             }
             catch (StringOutOfRangeException)
             {
-                Core.Logger.Error("State, Details and/or small image text are over 128 bytes which Rich Presence cannot handle, try to lower the amount of characters");
+                Core.Logger.Error("State, Details and/or an asset tooltip is/are over 128 bytes which Rich Presence cannot handle, try to lower the amount of characters");
             }
             catch (InvalidOperationException)
             {
@@ -143,16 +185,16 @@ namespace LabPresence
         /// <param name="type"><inheritdoc cref="ActivityType"/></param>
         /// <param name="party"><inheritdoc cref="Party"/></param>
         /// <param name="secrets"><inheritdoc cref="Secrets"/></param>
-        /// <param name="smallImageKey"><inheritdoc cref="Assets.SmallImageKey"/></param>
-        /// <param name="smallImageTitle"><inheritdoc cref="Assets.SmallImageText"/></param>
+        /// <param name="largeImage">The large image that appears as the main image in the Rich Presence. If <see langword="null"/>, will use BONELAB logo</param>
+        /// <param name="smallImage">The small image that appears as the image in the down right corner in the Rich Presence. If <see langword="null"/>, it won't be displayed</param>
         /// <returns><see langword="true"/> if set rich presence successfully, otherwise <see langword="false"/>. Note that if config is set to not be used, <see langword="true"/> will be returned</returns>
-        public static bool TrySetRichPresence(RPCConfig config, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
+        public static bool TrySetRichPresence(RPCConfig config, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, Asset largeImage = null, Asset smallImage = null)
         {
             if (!config.Use)
                 return true;
 
             CurrentConfig = config;
-            return TrySetRichPresence(config.Details, config.State, type, party, secrets, smallImageKey, smallImageTitle);
+            return TrySetRichPresence(config.Details, config.State, type, party, secrets, largeImage, smallImage);
         }
 
         /// <summary>
@@ -162,15 +204,15 @@ namespace LabPresence
         /// <param name="type"><inheritdoc cref="ActivityType"/></param>
         /// <param name="party"><inheritdoc cref="Party"/></param>
         /// <param name="secrets"><inheritdoc cref="Secrets"/></param>
-        /// <param name="smallImageKey"><inheritdoc cref="Assets.SmallImageKey"/></param>
-        /// <param name="smallImageTitle"><inheritdoc cref="Assets.SmallImageText"/></param>
-        public static void SetRichPresence(RPCConfig config, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, string smallImageKey = null, string smallImageTitle = null)
+        /// <param name="largeImage">The large image that appears as the main image in the Rich Presence. If <see langword="null"/>, will use BONELAB logo</param>
+        /// <param name="smallImage">The small image that appears as the image in the down right corner in the Rich Presence. If <see langword="null"/>, it won't be displayed</param>
+        public static void SetRichPresence(RPCConfig config, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, Asset largeImage = null, Asset smallImage = null)
         {
             if (!config.Use)
                 return;
 
             CurrentConfig = config;
-            SetRichPresence(config.Details, config.State, type, party, secrets, smallImageKey, smallImageTitle);
+            SetRichPresence(config.Details, config.State, type, party, secrets, largeImage, smallImage);
         }
 
         private static readonly Dictionary<ulong, Texture2D> _avatarCache = [];
@@ -179,8 +221,9 @@ namespace LabPresence
         /// Get a <see cref="Texture2D"/> of a provided <see cref="User"/>'s avatar
         /// </summary>
         /// <param name="user">The <see cref="User"/> to get the avatar of</param>
+        /// <param name="size">The size of the image</param>
         /// <param name="cache">Should the avatar be written be cached and on the next request use the cache</param>
-        public static Texture2D GetAvatar(User user, bool cache = false)
+        public static Texture2D GetAvatar(User user, User.AvatarSize size = User.AvatarSize.x512, bool cache = false)
         {
             ArgumentNullException.ThrowIfNull(user, nameof(user));
 
@@ -188,7 +231,7 @@ namespace LabPresence
                 return _avatarCache[user.ID];
 
             Texture2D texture = null;
-            var avatar = user.GetAvatarURL(User.AvatarFormat.PNG, User.AvatarSize.x512);
+            var avatar = user.GetAvatarURL(User.AvatarFormat.PNG, size);
             var client = new HttpClient();
             var task = client.GetAsync(avatar);
             task.Wait();
@@ -208,6 +251,34 @@ namespace LabPresence
                 _avatarCache[user.ID] = texture;
 
             return texture;
+        }
+
+        /// <summary>
+        /// Encrypt a message by converting it to base64. This isn't like really good encryption but good enough for discord secrets
+        /// </summary>
+        /// <param name="secret">The secret to encrypt</param>
+        public static string Encrypt(string secret)
+        {
+            if (string.IsNullOrWhiteSpace(secret))
+                return string.Empty;
+            // Not the strongest but provides a bit of protection
+            // I mean Discord says to encrypt it so I mean yeah, I'm doing that
+            // Whatever
+            var bytes = Encoding.UTF8.GetBytes(secret);
+            return Convert.ToBase64String(bytes);
+        }
+
+        /// <summary>
+        /// Decrypt a message by converting it from base64 to UTF8. This encryption is only to satisfy the requirements that Discord puts for secrets
+        /// </summary>
+        /// <param name="secret">The secret to decrypt</param>
+        public static string Decrypt(string secret)
+        {
+            if (string.IsNullOrWhiteSpace(secret))
+                return string.Empty;
+
+            var bytes = Convert.FromBase64String(secret);
+            return Encoding.UTF8.GetString(bytes);
         }
     }
 
@@ -282,5 +353,64 @@ namespace LabPresence
         /// <returns>A <see cref="Timestamps"/> with values of the <see cref="Timestamp"/></returns>
         public Timestamps ToRPC()
             => new() { EndUnixMilliseconds = End, StartUnixMilliseconds = Start };
+    }
+
+    /// <summary>
+    /// Holds information about the timestamp override
+    /// </summary>
+    /// <param name="timestamp"><inheritdoc cref="Timestamp"/></param>
+    /// <param name="origin"><inheritdoc cref="Origin"/></param>
+    public class TimestampOverride(Timestamp timestamp, string origin)
+    {
+        /// <summary>
+        /// Timestamp for the <see cref="RichPresenceManager"/>
+        /// </summary>
+        public Timestamp Timestamp { get; set; } = timestamp;
+
+        /// <summary>
+        /// String enabling to recognize where the override came from
+        /// </summary>
+        public string Origin { get; set; } = origin;
+    }
+
+    /// <summary>
+    /// An asset to be used in <see cref="Assets"/> for <see cref="RichPresence"/>
+    /// </summary>
+    public class Asset
+    {
+        /// <summary>
+        /// The key of the asset. This can either be a name of an image uploaded in Art Assets under Rich Presence on the application.
+        /// <para>
+        /// You can also use links that point to an image.
+        /// </para>
+        /// </summary>
+        public string Key { get; set; }
+
+        /// <summary>
+        /// The text that will display when you hover over the asset (128 bytes max)
+        /// </summary>
+        public string ToolTip { get; set; }
+
+        /// <summary>
+        /// Initialize a new instance of <see cref="Asset"/>
+        /// </summary>
+        /// <param name="key"><inheritdoc cref="Key"/></param>
+        /// <param name="tooltip"><inheritdoc cref="ToolTip"/></param>
+        public Asset(string key, string tooltip)
+        {
+            Key = key;
+            ToolTip = tooltip;
+        }
+
+        /// <summary>
+        /// Initialize a new instance of <see cref="Asset"/>
+        /// </summary>
+        /// <param name="uri">The URI of the file that contains the image</param>
+        /// <param name="tooltip"><inheritdoc cref="ToolTip"/></param>
+        public Asset(Uri uri, string tooltip)
+        {
+            Key = uri.ToString();
+            ToolTip = tooltip;
+        }
     }
 }

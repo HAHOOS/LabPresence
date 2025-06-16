@@ -1,17 +1,287 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 
+using BoneLib.Notifications;
+
+using DiscordRPC;
 using DiscordRPC.Message;
 
-using UnityEngine;
-using System.Text.Json;
-using BoneLib.Notifications;
-using NotificationType = BoneLib.Notifications.NotificationType;
-using System.Linq;
-using System.Collections.Generic;
+using Il2CppSLZ.Marrow.SceneStreaming;
 
-namespace LabPresence.Helper
+using LabPresence.Config;
+
+using MelonLoader;
+
+using Semver;
+
+using UnityEngine;
+
+namespace LabPresence.Plugins.Default
 {
+    internal class FusionPlugin : Plugin<FusionConfig>
+    {
+        public override string Name => "Fusion";
+
+        public override SemVersion Version => new(1, 0, 0);
+
+        public override string Author => "HAHOOS";
+
+        internal static FusionPlugin Instance { get; set; }
+
+        public override void Init()
+        {
+            Instance = this;
+            if (!Fusion.HasFusion)
+            {
+                Logger.Error("LabFusion is not installed, so FusionPlugin will not be set up!");
+                return;
+            }
+
+            Placeholders.RegisterPlaceholder("fusion_lobbyName", (_) => Fusion.GetLobbyName());
+            Placeholders.RegisterPlaceholder("fusion_host", (_) => Fusion.GetHost());
+            Placeholders.RegisterPlaceholder("fusion_currentPlayers", (_) => Fusion.GetPlayerCount().current.ToString());
+            Placeholders.RegisterPlaceholder("fusion_maxPlayers", (_) => Fusion.GetPlayerCount().max.ToString());
+            Placeholders.RegisterPlaceholder("fusion_privacy", (_) => Enum.GetName(Fusion.GetPrivacy()).Replace("_", " "));
+
+            Overwrites.OnLevelLoaded.RegisterOverwrite(OnLevelLoaded, out _, 100);
+            Overwrites.OnLevelLoaded.RegisterOverwrite(OnLevelLoading, out _, 100);
+
+            Overwrites.OnJoin.RegisterOverwrite(Join, out _, 100);
+            Overwrites.OnJoinRequested.RegisterOverwrite(JoinRequested, out _, 100);
+
+            MelonEvents.OnUpdate.Subscribe(Update);
+            HasFusion();
+        }
+
+        private void HasFusion()
+        {
+            Fusion.Init(Logger);
+            LabFusion.Utilities.MultiplayerHooking.OnDisconnected += OnDisconnect;
+        }
+
+        private void OnDisconnect()
+        {
+            if (RichPresenceManager.OverrideTimestamp?.Origin == "fusion")
+                RichPresenceManager.ResetOverrideTimestamp();
+            Overwrites.OnLevelLoaded.Run();
+        }
+
+        private bool JoinRequested(JoinRequestMessage message)
+        {
+            try
+            {
+                Logger.Info("Join requested");
+                void after() => Fusion.JoinRequest(message);
+                MelonCoroutines.Start(AfterLevelLoaded(after));
+            }
+            catch (Exception ex)
+            {
+                Notifier.Send(new Notification()
+                {
+                    Title = "Failure | LabPresence",
+                    Message = "An unexpected error has occurred while handling join request, check the console or logs for more details",
+                    Type = NotificationType.Error,
+                    PopupLength = 5f,
+                    ShowTitleOnPopup = true,
+                });
+                Logger.Error($"An unexpected error has occurred while handling join request, exception:\n{ex}");
+                return false;
+            }
+            return true;
+        }
+
+        private bool OnLevelLoaded()
+        {
+            if (Fusion.IsConnected)
+                RichPresenceManager.TrySetRichPresence(GetConfig().LevelLoaded, party: GetParty(), secrets: GetSecrets());
+            return Fusion.IsConnected;
+        }
+
+        private bool OnLevelLoading()
+        {
+            if (Fusion.IsConnected)
+                RichPresenceManager.TrySetRichPresence(GetConfig().LevelLoading, party: GetParty(), secrets: GetSecrets());
+            return Fusion.IsConnected;
+        }
+
+        private bool Join(JoinMessage e)
+        {
+            if (!Fusion.HasFusion)
+                return false;
+
+            try
+            {
+                Logger.Info("Received Join Request");
+                string decrypted = RichPresenceManager.Decrypt(e.Secret);
+                string[] split = decrypted.Split("|");
+
+                if (split.Length <= 1)
+                    throw new Exception("Secret provided to join the lobby did not include all of the necessary info");
+
+                if (split.Length > 2)
+                    throw new Exception("Secret provided to join the lobby was invalid, the name of the network layer or code to the server may have contained the '|' character used to separate network layer & code, causing unexpected results");
+
+                string layer = split[0];
+                string code = split[1];
+
+                void join()
+                {
+                    Logger.Info($"Attempting to join with the following code: {code}");
+                    if (code != Fusion.GetLobbyCode())
+                    {
+                        Notifier.Send(new Notification()
+                        {
+                            Title = "LabPresence",
+                            Message = "Attempting to join the target lobby, this might take a few seconds...",
+                            PopupLength = 4f,
+                            ShowTitleOnPopup = true,
+                            Type = NotificationType.Information
+                        });
+
+                        if (Fusion.EnsureNetworkLayer(layer))
+                        {
+                            Fusion.JoinByCode(code);
+                        }
+                        else
+                        {
+                            Notifier.Send(new Notification()
+                            {
+                                Title = "Failure | LabPresence",
+                                Message = "Failed to ensure network layer, check the console/logs for errors. If none are present, it's likely the user is playing on a network layer that you do not have.",
+                                Type = NotificationType.Error,
+                                PopupLength = 5f,
+                                ShowTitleOnPopup = true,
+                            });
+                        }
+                    }
+                    else
+                    {
+                        Logger.Error("Player is already in the lobby");
+                        Notifier.Send(new Notification()
+                        {
+                            Title = "Failure | LabPresence",
+                            Message = "Could not join, because you are already in the lobby!",
+                            Type = NotificationType.Error,
+                            PopupLength = 5f,
+                            ShowTitleOnPopup = true,
+                        });
+                    }
+                }
+
+                MelonCoroutines.Start(AfterLevelLoaded(join));
+            }
+            catch (Exception ex)
+            {
+                Notifier.Send(new Notification()
+                {
+                    Title = "Failure | LabPresence",
+                    Message = "An unexpected error has occurred while trying to join the lobby, check the console or logs for more details",
+                    Type = NotificationType.Error,
+                    PopupLength = 5f,
+                    ShowTitleOnPopup = true,
+                });
+                Logger.Error($"An unexpected error has occurred while trying to join the lobby, exception:\n{ex}");
+                return false;
+            }
+            return true;
+        }
+
+        private static Party GetParty()
+        {
+            if (!Fusion.IsConnected)
+                return null;
+
+            var id = Fusion.GetLobbyID();
+
+            // Discord requires the ID string to have at least 2 characters
+            if (id == 0 || id.ToString().Length < 2)
+                return null;
+
+            return new Party()
+            {
+                ID = Fusion.GetLobbyID().ToString(),
+                Privacy = Fusion.GetPrivacy() == Fusion.ServerPrivacy.Public ? Party.PrivacySetting.Public : Party.PrivacySetting.Private,
+                Max = Fusion.GetPlayerCount().max,
+                Size = Fusion.GetPlayerCount().current
+            };
+        }
+
+        private static Secrets GetSecrets()
+        {
+            if (!Fusion.IsConnected)
+                return null;
+
+            if (SceneStreamer.Session.Status == StreamStatus.LOADING)
+                return null;
+
+            var (current, max) = Fusion.GetPlayerCount();
+            if (current >= max)
+                return null;
+
+            var privacy = Fusion.GetPrivacy();
+
+            if (privacy == Fusion.ServerPrivacy.Locked)
+                return null;
+
+            if (privacy != Fusion.ServerPrivacy.Public && privacy != Fusion.ServerPrivacy.Friends_Only && !Fusion.IsAllowedToInvite())
+                return null;
+
+            var layer = Fusion.GetCurrentNetworkLayerTitle();
+            if (string.IsNullOrWhiteSpace(layer))
+                return null;
+
+            var code = Fusion.GetLobbyCode();
+            if (string.IsNullOrWhiteSpace(code))
+                return null;
+
+            var encrypted = RichPresenceManager.Encrypt($"{layer}|{code}");
+
+            return new Secrets()
+            {
+                JoinSecret = encrypted
+            };
+        }
+
+        private static IEnumerator AfterLevelLoaded(Action callback)
+        {
+            while (SceneStreamer.Session?.Status != StreamStatus.DONE)
+                yield return null;
+
+            callback?.Invoke();
+        }
+
+        private float ElapsedSeconds = 0;
+
+        private void Update()
+        {
+            if (Category != null && GetConfig() != null)
+                Fusion.EnsureMetaDataSync();
+
+            ElapsedSeconds += Time.deltaTime;
+
+            var _delay = Math.Clamp(Core.Config.RefreshDelay, Core.RequiredDelay, double.MaxValue);
+            _delay = Math.Clamp(_delay, Fusion.GetGamemodeMinimumDelay(), double.MaxValue);
+            if (ElapsedSeconds >= _delay)
+            {
+                ElapsedSeconds = 0;
+
+                if (!Fusion.IsConnected)
+                {
+                    Overwrites.OnLevelLoaded.Run();
+                }
+                else
+                {
+                    var (key, tooltip) = Fusion.GetGamemodeRPC();
+                    RichPresenceManager.TrySetRichPresence(RichPresenceManager.CurrentConfig, ActivityType.Playing, GetParty(), GetSecrets(), smallImage: new(key, tooltip));
+                }
+            }
+        }
+    }
+
     /// <summary>
     /// Class that contains methods to interact with LabFusion
     /// </summary>
@@ -22,7 +292,9 @@ namespace LabPresence.Helper
         /// <summary>
         /// Is LabFusion installed
         /// </summary>
-        public static bool HasFusion => Core.FindMelon("LabFusion", "Lakatrazz") != null;
+        public static bool HasFusion => MelonBase.FindMelon("LabFusion", "Lakatrazz") != null;
+
+        private static Logger Logger;
 
         /// <summary>
         /// Is the local player connected to a lobby
@@ -134,7 +406,7 @@ namespace LabPresence.Helper
                 return ServerPrivacy.Unknown;
 
             var current = lobbyInfo.Privacy;
-            return (ServerPrivacy)((int)current);
+            return (ServerPrivacy)(int)current;
         }
 
         /// <summary>
@@ -184,7 +456,7 @@ namespace LabPresence.Helper
 
         private static string Internal_GetCurrentNetworkLayerTitle()
         {
-            return LabFusion.Network.NetworkInfo.CurrentNetworkLayer?.Title;
+            return LabFusion.Network.NetworkLayerManager.Layer?.Title;
         }
 
         /// <summary>
@@ -197,10 +469,10 @@ namespace LabPresence.Helper
 
         internal static void Internal_EnsureMetadataSync()
         {
-            if (!LabFusion.Network.NetworkInfo.IsServer)
-                LabFusion.Player.LocalPlayer.Metadata.TryRemoveMetadata(AllowKey);
-            else if (!LabFusion.Player.LocalPlayer.Metadata.TryGetMetadata(AllowKey, out string val) || !bool.TryParse(val, out bool value) || value != Core.FusionConfig.AllowPlayersToInvite)
-                LabFusion.Player.LocalPlayer.Metadata.TrySetMetadata(AllowKey, Core.FusionConfig.AllowPlayersToInvite.ToString());
+            if (!LabFusion.Network.NetworkInfo.IsHost)
+                LabFusion.Player.LocalPlayer.Metadata.Metadata.TryRemoveMetadata(AllowKey);
+            else if (!LabFusion.Player.LocalPlayer.Metadata.Metadata.TryGetMetadata(AllowKey, out string val) || !bool.TryParse(val, out bool value) || value != FusionPlugin.Instance.GetConfig().AllowPlayersToInvite)
+                LabFusion.Player.LocalPlayer.Metadata.Metadata.TrySetMetadata(AllowKey, FusionPlugin.Instance.GetConfig().AllowPlayersToInvite.ToString());
         }
 
         /// <summary>
@@ -216,25 +488,25 @@ namespace LabPresence.Helper
 
         private static bool Internal_IsAllowedToInvite()
         {
-            if (!Core.FusionConfig.Joins)
+            if (!FusionPlugin.Instance.GetConfig().Joins)
                 return false;
 
-            if (LabFusion.Network.NetworkInfo.IsServer)
+            if (LabFusion.Network.NetworkInfo.IsHost)
                 return true;
 
-            if (LabFusion.Player.PlayerIdManager.GetHostId() == null)
+            if (LabFusion.Player.PlayerIDManager.GetHostID() == null)
                 return true;
 
-            if (!LabFusion.Entities.NetworkPlayerManager.TryGetPlayer(LabFusion.Player.PlayerIdManager.GetHostId(), out var host))
+            if (!LabFusion.Entities.NetworkPlayerManager.TryGetPlayer(LabFusion.Player.PlayerIDManager.GetHostID(), out var host))
                 return true;
 
             if (host == null)
                 return true;
 
-            if (string.IsNullOrWhiteSpace(host.PlayerId?.Metadata?.GetMetadata(AllowKey)))
+            if (string.IsNullOrWhiteSpace(host.PlayerID?.Metadata?.Metadata?.GetMetadata(AllowKey)))
                 return true;
 
-            return host.PlayerId?.Metadata?.GetMetadata(AllowKey) == bool.TrueString;
+            return host.PlayerID?.Metadata?.Metadata?.GetMetadata(AllowKey) == bool.TrueString;
         }
 
         /// <summary>
@@ -254,7 +526,7 @@ namespace LabPresence.Helper
         {
             if (!LabFusion.Network.NetworkLayer.LayerLookup.TryGetValue(title, out var layer))
             {
-                Core.Logger.Error($"Could find network layer '{title}'");
+                Logger.Error($"Could find network layer '{title}'");
                 return false;
             }
 
@@ -270,7 +542,7 @@ namespace LabPresence.Helper
             }
             catch (Exception ex)
             {
-                Core.Logger.Error($"An unexpected error has occurred while ensuring fusion is on the right network layer, exception:\n{ex}");
+                Logger.Error($"An unexpected error has occurred while ensuring fusion is on the right network layer, exception:\n{ex}");
                 return false;
             }
 
@@ -302,17 +574,17 @@ namespace LabPresence.Helper
                 return;
             }
 
-            if (LabFusion.Network.NetworkInfo.CurrentNetworkLayer.Matchmaker != null)
+            if (LabFusion.Network.NetworkLayerManager.Layer.Matchmaker != null)
             {
-                LabFusion.Network.NetworkInfo.CurrentNetworkLayer.Matchmaker.RequestLobbies(x =>
+                LabFusion.Network.NetworkLayerManager.Layer.Matchmaker.RequestLobbies(x =>
                 {
                     LabFusion.Data.LobbyInfo targetLobby = null;
 
-                    if (x.lobbies != null)
+                    if (x.Lobbies != null)
                     {
-                        foreach (var item in x.lobbies)
+                        foreach (var item in x.Lobbies)
                         {
-                            var info = item.metadata.LobbyInfo;
+                            var info = item.Metadata.LobbyInfo;
                             if (info?.LobbyCode == code)
                             {
                                 targetLobby = info;
@@ -323,7 +595,7 @@ namespace LabPresence.Helper
 
                     if (targetLobby == null)
                     {
-                        Core.Logger.Error("The lobby was not found");
+                        Logger.Error("The lobby was not found");
                         Notifier.Send(new Notification()
                         {
                             Title = "Error | LabPresence",
@@ -340,13 +612,13 @@ namespace LabPresence.Helper
                         var host = targetLobby.PlayerList?.Players?.FirstOrDefault(x => x.Username == targetLobby.LobbyHostName);
                         if (host == null)
                         {
-                            Core.Logger.Warning("Could not find host, unable to verify if you can join the lobby (Privacy: Friends Only)");
+                            Logger.Warning("Could not find host, unable to verify if you can join the lobby (Privacy: Friends Only)");
                         }
                         else
                         {
-                            if (!LabFusion.Network.NetworkInfo.CurrentNetworkLayer.IsFriend(host.LongId))
+                            if (!LabFusion.Network.NetworkLayerManager.Layer.IsFriend(host.LongId))
                             {
-                                Core.Logger.Error("The lobby is friends only and you are not friends with the host, cannot join");
+                                Logger.Error("The lobby is friends only and you are not friends with the host, cannot join");
                                 Notifier.Send(new Notification()
                                 {
                                     Title = "Error | LabPresence",
@@ -362,7 +634,7 @@ namespace LabPresence.Helper
 
                     if (targetLobby.Privacy == LabFusion.Network.ServerPrivacy.LOCKED)
                     {
-                        Core.Logger.Error("The lobby is locked, cannot join");
+                        Logger.Error("The lobby is locked, cannot join");
                         Notifier.Send(new Notification()
                         {
                             Title = "Error | LabPresence",
@@ -399,7 +671,7 @@ namespace LabPresence.Helper
             if (message == null)
                 return;
 
-            if (Core.FusionConfig?.ShowJoinRequestPopUp == true)
+            if (FusionPlugin.Instance.GetConfig()?.ShowJoinRequestPopUp == true)
             {
                 Texture2D texture = RichPresenceManager.GetAvatar(message.User) ?? new Texture2D(1, 1);
                 Notifier.Send(new Notification()
@@ -412,31 +684,40 @@ namespace LabPresence.Helper
                     CustomIcon = texture
                 });
             }
-            LabFusion.Utilities.FusionNotifier.Send(new LabFusion.Utilities.FusionNotification()
+            LabFusion.UI.Popups.Notifier.Send(new LabFusion.UI.Popups.Notification()
             {
                 Title = "Join Request",
                 Message = $"{message.User.DisplayName} (@{message.User.Username}) wants to join you!",
                 PopupLength = 5f,
                 SaveToMenu = true,
                 ShowPopup = false,
-                Type = LabFusion.Utilities.NotificationType.INFORMATION,
+                Type = LabFusion.UI.Popups.NotificationType.INFORMATION,
                 OnAccepted = () => Core.Client.Respond(message, true),
                 OnDeclined = () => Core.Client.Respond(message, false)
             });
         }
 
-        internal static void Init()
+        internal static void Init(Logger logger)
         {
-            if (HasFusion) Internal_Init();
+            if (HasFusion) Internal_Init(logger);
         }
 
-        private static void Internal_Init()
+        private static void Internal_Init(Logger logger)
         {
-            LabFusion.Utilities.MultiplayerHooking.OnDisconnect -= Update;
-            LabFusion.Utilities.MultiplayerHooking.OnDisconnect += Update;
+            Logger = logger;
 
-            LabFusion.Utilities.MultiplayerHooking.OnJoinServer += SetTimestamp;
-            LabFusion.Utilities.MultiplayerHooking.OnStartServer += SetTimestamp;
+            LabFusion.Utilities.MultiplayerHooking.OnDisconnected -= Update;
+            LabFusion.Utilities.MultiplayerHooking.OnDisconnected += Update;
+
+            LabFusion.Utilities.MultiplayerHooking.OnJoinedServer += SetTimestamp;
+            LabFusion.Utilities.MultiplayerHooking.OnStartedServer += SetTimestamp;
+
+            LabFusion.SDK.Gamemodes.GamemodeManager.OnGamemodeStarted += () => RichPresenceManager.SetOverrideTimestamp(new(GetGamemodeOverrideTime(), "fusion"), true);
+            LabFusion.SDK.Gamemodes.GamemodeManager.OnGamemodeStopped += () =>
+            {
+                if (RichPresenceManager.OverrideTimestamp?.Origin == "fusion")
+                    RichPresenceManager.ResetOverrideTimestamp(true);
+            };
 
             Gamemodes.RegisterGamemode("Lakatrazz.Hide And Seek", () =>
             {
@@ -453,9 +734,9 @@ namespace LabPresence.Helper
                     return string.Empty;
 
                 var gamemode = (LabFusion.SDK.Gamemodes.Deathmatch)LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
-                var id = LabFusion.Player.PlayerIdManager.LocalId;
+                var id = LabFusion.Player.PlayerIDManager.LocalID;
 
-                List<LabFusion.Player.PlayerId> plrs = [.. LabFusion.Player.PlayerIdManager.PlayerIds];
+                List<LabFusion.Player.PlayerID> plrs = [.. LabFusion.Player.PlayerIDManager.PlayerIDs];
                 plrs = [.. plrs.OrderBy(x => gamemode.ScoreKeeper.GetScore(x))];
                 plrs.Reverse();
 
@@ -479,7 +760,7 @@ namespace LabPresence.Helper
 
                 var gamemode = (LabFusion.SDK.Gamemodes.Entangled)LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
                 const string key = "InternalEntangledMetadata.Partner.{0}";
-                bool success = gamemode.Metadata.TryGetMetadata(string.Format(key, LabFusion.Player.PlayerIdManager.LocalLongId), out string val);
+                bool success = gamemode.Metadata.TryGetMetadata(string.Format(key, LabFusion.Player.PlayerIDManager.LocalPlatformID), out string val);
                 if (!success || val == "-1")
                 {
                     return "With no partner :(";
@@ -488,7 +769,7 @@ namespace LabPresence.Helper
                 {
                     if (!ulong.TryParse(val, out ulong res))
                         return "With no partner :(";
-                    var plr = LabFusion.Player.PlayerIdManager.GetPlayerId(res);
+                    var plr = LabFusion.Player.PlayerIDManager.GetPlayerID(res);
                     if (plr == null)
                         return "With no partner :(";
 
@@ -502,7 +783,7 @@ namespace LabPresence.Helper
 
         private static void SetTimestamp()
         {
-            if (Core.FusionConfig.OverrrideTimeToLobby && Core.Config.TimeMode == Config.DefaultConfig.TimeModeEnum.Level)
+            if (FusionPlugin.Instance.GetConfig().OverrrideTimeToLobby && Core.Config.TimeMode == DefaultConfig.TimeModeEnum.Level)
                 RichPresenceManager.SetTimestampStartToNow();
         }
 
@@ -582,7 +863,7 @@ namespace LabPresence.Helper
             var registered = Gamemodes.GetGamemode(gamemode.Barcode);
             var val = registered?.CustomToolTip != null ? registered.GetToolTipValue() : string.Empty;
 
-            if (Core.FusionConfig.ShowCustomGamemodeToolTips)
+            if (FusionPlugin.Instance.GetConfig().ShowCustomGamemodeToolTips)
                 return (GetGamemodeKey(gamemode.Barcode), !string.IsNullOrWhiteSpace(val) ? $"{gamemode.Title} | {val}" : gamemode.Title);
             else
                 return (GetGamemodeKey(gamemode.Barcode), gamemode.Title);
@@ -619,20 +900,20 @@ namespace LabPresence.Helper
             }
             catch (Exception e)
             {
-                Core.Logger.Error($"An unexpected error has occurred while trying to remotely get a key for the gamemode, defaulting to unknown key. Exception:\n{e}");
+                Logger.Error($"An unexpected error has occurred while trying to remotely get a key for the gamemode, defaulting to unknown key. Exception:\n{e}");
             }
             return "unknown_gamemode";
         }
 
         private static void Update()
         {
-            if (Core.Config.TimeMode == Config.DefaultConfig.TimeModeEnum.Level && Core.FusionConfig.OverrrideTimeToLobby && !IsConnected)
+            if (Core.Config.TimeMode == DefaultConfig.TimeModeEnum.Level && FusionPlugin.Instance.GetConfig().OverrrideTimeToLobby && !IsConnected)
                 RichPresenceManager.SetTimestampStartToNow();
 
-            if (RichPresenceManager.CurrentConfig == Core.FusionConfig.LevelLoaded && !IsConnected)
-                RichPresenceManager.TrySetRichPresence(Core.Config.LevelLoaded);
-            else if (RichPresenceManager.CurrentConfig == Core.FusionConfig.LevelLoading && !IsConnected)
-                RichPresenceManager.TrySetRichPresence(Core.Config.LevelLoading);
+            if (RichPresenceManager.CurrentConfig == FusionPlugin.Instance.GetConfig().LevelLoaded && !IsConnected)
+                Overwrites.OnLevelLoaded.Run();
+            else if (RichPresenceManager.CurrentConfig == FusionPlugin.Instance.GetConfig().LevelLoading && !IsConnected)
+                Overwrites.OnLevelLoading.Run();
         }
 
         /// <summary>

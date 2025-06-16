@@ -8,10 +8,34 @@
 
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>$(SolutionDir)\key.snk</AssemblyOriginatorKeyFile>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Title>LabPresence</Title>
+		<Version>1.1.0</Version>
+		<Description>Adds Discord Rich Presence to BONELAB</Description>
+		<PackageIcon>icon.png</PackageIcon>
+		<PackageReadmeFile>README_NoHTML.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/HAHOOS/LabPresence</RepositoryUrl>
+		<PackageTags></PackageTags>
+		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 
 	</PropertyGroup>
 	<ItemGroup>
 	  <EmbeddedResource Include="Embedded\README.txt" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Include="..\icon.png">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	  <None Include="..\LICENSE.txt">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	  <None Include="..\README_NoHTML.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
 	</ItemGroup>
 
 	<ItemGroup>
