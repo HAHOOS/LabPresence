@@ -34,7 +34,7 @@ namespace LabPresence
         /// <summary>
         /// Version of the mod
         /// </summary>
-        public const string Version = "1.1.0";
+        public const string Version = "1.2.0";
 
         /// <summary>
         /// The Discord RPC Client
