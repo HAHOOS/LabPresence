@@ -155,6 +155,7 @@ namespace LabPresence
             };
 
             LevelHooks.OnLevelLoading += (_) => Overwrites.OnLevelLoading.Run();
+            LevelHooks.OnLevelUnloaded += (_) => Overwrites.OnLevelUnloaded.Run();
 
             AssetWarehouse.OnReady((Il2CppSystem.Action)Overwrites.OnAssetWarehouseLoaded.Run);
 

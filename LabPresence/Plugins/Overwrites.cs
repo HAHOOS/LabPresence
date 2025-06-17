@@ -12,6 +12,8 @@ namespace LabPresence.Plugins
 
         public static OverwritesType OnLevelLoading { get; } = new();
 
+        public static OverwritesType OnLevelUnloaded { get; } = new();
+
         public static OverwritesType OnAssetWarehouseLoaded { get; } = new();
 
         public static OverwritesType OnPreGame { get; } = new();
