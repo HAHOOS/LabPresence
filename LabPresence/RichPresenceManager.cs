@@ -193,8 +193,11 @@ namespace LabPresence
             if (!config.Use)
                 return true;
 
-            CurrentConfig = config;
-            return TrySetRichPresence(config.Details, config.State, type, party, secrets, largeImage, smallImage);
+            Core.Logger.Msg($"Update requested: {config.Details} / {config.State}");
+            bool res = TrySetRichPresence(config.Details, config.State, type, party, secrets, largeImage, smallImage);
+            if (res)
+                CurrentConfig = config;
+            return res;
         }
 
         /// <summary>
@@ -211,8 +214,8 @@ namespace LabPresence
             if (!config.Use)
                 return;
 
-            CurrentConfig = config;
             SetRichPresence(config.Details, config.State, type, party, secrets, largeImage, smallImage);
+            CurrentConfig = config;
         }
 
         private static readonly Dictionary<ulong, Texture2D> _avatarCache = [];

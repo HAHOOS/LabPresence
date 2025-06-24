@@ -13,6 +13,7 @@ using DiscordRPC.Message;
 using Il2CppSLZ.Marrow.SceneStreaming;
 
 using LabPresence.Config;
+using LabPresence.Helper;
 
 using MelonLoader;
 
@@ -96,6 +97,7 @@ namespace LabPresence.Plugins.Default
 
         private bool OnLevelLoaded()
         {
+            Logger.Info("level loaded");
             if (Fusion.IsConnected)
                 RichPresenceManager.TrySetRichPresence(GetConfig().LevelLoaded, party: GetParty(), secrets: GetSecrets());
             return Fusion.IsConnected;
@@ -269,11 +271,7 @@ namespace LabPresence.Plugins.Default
             {
                 ElapsedSeconds = 0;
 
-                if (!Fusion.IsConnected)
-                {
-                    Overwrites.OnLevelLoaded.Run();
-                }
-                else
+                if (Fusion.IsConnected && SceneStreamer.Session?.Status == StreamStatus.DONE)
                 {
                     var (key, tooltip) = Fusion.GetGamemodeRPC();
                     RichPresenceManager.TrySetRichPresence(RichPresenceManager.CurrentConfig, ActivityType.Playing, GetParty(), GetSecrets(), smallImage: new(key, tooltip));
@@ -783,7 +781,7 @@ namespace LabPresence.Plugins.Default
 
         private static void SetTimestamp()
         {
-            if (FusionPlugin.Instance.GetConfig().OverrrideTimeToLobby && Core.Config.TimeMode == DefaultConfig.TimeModeEnum.Level)
+            if (FusionPlugin.Instance.GetConfig().OverwriteTimeToLobby && Core.Config.TimeMode == DefaultConfig.TimeModeEnum.Level)
                 RichPresenceManager.SetTimestampStartToNow();
         }
 
@@ -907,7 +905,7 @@ namespace LabPresence.Plugins.Default
 
         private static void Update()
         {
-            if (Core.Config.TimeMode == DefaultConfig.TimeModeEnum.Level && FusionPlugin.Instance.GetConfig().OverrrideTimeToLobby && !IsConnected)
+            if (Core.Config.TimeMode == DefaultConfig.TimeModeEnum.Level && FusionPlugin.Instance.GetConfig().OverwriteTimeToLobby && !IsConnected)
                 RichPresenceManager.SetTimestampStartToNow();
 
             if (RichPresenceManager.CurrentConfig == FusionPlugin.Instance.GetConfig().LevelLoaded && !IsConnected)

@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections;
 
 using Il2CppSLZ.Marrow.SceneStreaming;
 using Il2CppSLZ.Marrow.Utilities;
 using Il2CppSLZ.Marrow.Warehouse;
-
-using MelonLoader;
 
 namespace LabPresence.Helper
 {
@@ -35,27 +32,6 @@ namespace LabPresence.Helper
         public static Action<LevelCrate> OnLevelUnloaded { get; set; }
 
         internal static LastStatus lastStatus;
-
-        /*
-        internal static void Init()
-        {
-            SceneStreamer.doAnyLevelLoad += (System.Action)(() => OnLevelLoaded?.Invoke(SceneStreamer.Session.Level));
-            SceneStreamer.doAnyLevelUnload += (System.Action)(() =>
-            {
-                OnLevelUnloaded?.Invoke(SceneStreamer.Session.Level);
-                MelonCoroutines.Start(WaitForLoading());
-            });
-        }
-
-        private static IEnumerator WaitForLoading()
-        {
-            var level = SceneStreamer.Session.Level;
-            while (SceneStreamer.Session?.Status != StreamStatus.LOADING)
-                yield return null;
-
-            OnLevelUnloaded?.Invoke(level);
-        }
-        */
 
         // TODO: Improve to not check every frame for changes
         internal static void OnUpdate()

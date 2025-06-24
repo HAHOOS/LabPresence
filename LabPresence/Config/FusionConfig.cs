@@ -11,8 +11,8 @@ namespace LabPresence.Config
         /// If the time mode will be set to 'Level', when in a fusion lobby it will override the time to display how long you are in the lobby instead of the level
         /// </summary>
         [TomlPrecedingComment("If the time mode will be set to 'Level', when in a fusion lobby it will override the time to display how long you are in the lobby instead of the level")]
-        [TomlProperty("OverrideTimeToLobby")]
-        public bool OverrrideTimeToLobby { get; set; } = true;
+        [TomlProperty("OverwriteTimeToLobby")]
+        public bool OverwriteTimeToLobby { get; set; } = true;
 
         /// <summary>
         /// If <see langword="true"/>, a notification will be shown when someone requests to join your server
