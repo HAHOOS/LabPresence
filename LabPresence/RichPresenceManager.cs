@@ -18,6 +18,8 @@ namespace LabPresence
     /// </summary>
     public static class RichPresenceManager
     {
+        private static Presence CurrentPresence { get; set; }
+
         /// <summary>
         /// The current Rich Presence configuration
         /// </summary>
@@ -53,6 +55,32 @@ namespace LabPresence
         {
             if (Core.Client.CurrentPresence != null)
                 Core.Client.Update(x => x.Timestamps = OverrideTimestamp != null ? OverrideTimestamp?.Timestamp?.ToRPC() : Timestamp.ToRPC());
+        }
+
+        private static float time = 0f;
+        private static Presence old = null;
+
+        internal static void OnUpdate()
+        {
+            if (CurrentPresence != null)
+            {
+                time += Time.deltaTime;
+                if (CurrentPresence != old)
+                {
+                    time = 0f;
+                    old = CurrentPresence;
+                }
+                var delay = CurrentPresence.GetMinimumDelay();
+                if (time >= delay)
+                {
+                    TrySetRichPresence(CurrentPresence.Config, CurrentPresence.Type, CurrentPresence.Party, CurrentPresence.Secrets, CurrentPresence.LargeImage, CurrentPresence.SmallImage);
+                    time = 0f;
+                }
+            }
+            else
+            {
+                time = 0f;
+            }
         }
 
         /// <summary>
@@ -117,8 +145,8 @@ namespace LabPresence
             largeImage ??= new("icon", "BONELAB");
             if (!RichPresence.ValidateString(Core.RemoveUnityRichText(details?.ApplyPlaceholders()), out string det, 128, Encoding.UTF8) ||
                 !RichPresence.ValidateString(Core.RemoveUnityRichText(state?.ApplyPlaceholders()), out string stat, 128, Encoding.UTF8) ||
-                !RichPresence.ValidateString(largeImage.ToolTip, out _, 128, Encoding.UTF8) ||
-                !RichPresence.ValidateString(smallImage?.ToolTip, out _, 128, Encoding.UTF8))
+                !RichPresence.ValidateString(Core.RemoveUnityRichText(largeImage?.ToolTip?.ApplyPlaceholders()), out _, 128, Encoding.UTF8) ||
+                !RichPresence.ValidateString(Core.RemoveUnityRichText(smallImage?.ToolTip?.ApplyPlaceholders()), out _, 128, Encoding.UTF8))
             {
                 throw new StringOutOfRangeException("State, Details and/or an asset tooltip is/are over 128 bytes which Rich Presence cannot handle, try to lower the amount of characters", 0, 128);
             }
@@ -196,7 +224,10 @@ namespace LabPresence
             Core.Logger.Msg($"Update requested: {config.Details} / {config.State}");
             bool res = TrySetRichPresence(config.Details, config.State, type, party, secrets, largeImage, smallImage);
             if (res)
+            {
                 CurrentConfig = config;
+                CurrentPresence = new Presence(config, type, party, secrets, largeImage, smallImage);
+            }
             return res;
         }
 
@@ -215,6 +246,7 @@ namespace LabPresence
                 return;
 
             SetRichPresence(config.Details, config.State, type, party, secrets, largeImage, smallImage);
+            CurrentPresence = new Presence(config, type, party, secrets, largeImage, smallImage);
             CurrentConfig = config;
         }
 
@@ -283,6 +315,21 @@ namespace LabPresence
             var bytes = Convert.FromBase64String(secret);
             return Encoding.UTF8.GetString(bytes);
         }
+    }
+
+    public class Presence(RPCConfig config, ActivityType type, Party party, Secrets secrets, Asset largeImage, Asset smallImage)
+    {
+        public RPCConfig Config { get; internal set; } = config;
+
+        public ActivityType Type { get; internal set; } = type;
+
+        public Party Party { get; internal set; } = party;
+
+        public Secrets Secrets { get; internal set; } = secrets;
+
+        public Asset LargeImage { get; internal set; } = largeImage;
+
+        public Asset SmallImage { get; internal set; } = smallImage;
     }
 
     /// <summary>

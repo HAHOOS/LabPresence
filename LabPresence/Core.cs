@@ -281,6 +281,7 @@ namespace LabPresence
             if (Client?.IsInitialized == true)
                 Client?.Invoke();
 
+            RichPresenceManager.OnUpdate();
             FPS.OnUpdate();
             LevelHooks.OnUpdate();
 

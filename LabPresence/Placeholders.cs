@@ -247,6 +247,33 @@ namespace LabPresence
             placeholders?.ForEach(x => max = (float)Math.Clamp(max, x.MinimalDelay, double.MaxValue));
             return max;
         }
+
+        /// <summary>
+        /// Get the minimum delay for a presence
+        /// </summary>
+        /// <param name="presence">The presence to get the delay of</param>
+        /// <exception cref="ArgumentNullException">The config is null</exception>
+        public static float GetMinimumDelay(this Presence presence)
+        {
+            if (presence == null)
+                throw new ArgumentNullException(nameof(presence));
+
+            var state = presence.Config?.State?.GetPlaceholdersInString();
+            var details = presence.Config?.Details?.GetPlaceholdersInString();
+
+            var small = presence.SmallImage?.ToolTip?.GetPlaceholdersInString();
+            var large = presence.LargeImage?.ToolTip?.GetPlaceholdersInString();
+
+            List<Placeholder> placeholders = [];
+            if (state != null) placeholders.AddRange(state);
+            if (details != null) placeholders.AddRange(details);
+            if (small != null) placeholders.AddRange(small);
+            if (large != null) placeholders.AddRange(large);
+
+            float max = 0.1f;
+            placeholders?.ForEach(x => max = (float)Math.Clamp(max, x.MinimalDelay, double.MaxValue));
+            return max;
+        }
     }
 
     /// <summary>
