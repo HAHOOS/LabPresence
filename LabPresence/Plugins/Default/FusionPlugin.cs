@@ -97,7 +97,6 @@ namespace LabPresence.Plugins.Default
 
         private bool OnLevelLoaded()
         {
-            Logger.Info("level loaded");
             if (Fusion.IsConnected)
                 RichPresenceManager.TrySetRichPresence(GetConfig().LevelLoaded, party: GetParty(), secrets: GetSecrets());
             return Fusion.IsConnected;

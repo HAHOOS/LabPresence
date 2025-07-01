@@ -70,6 +70,9 @@ namespace LabPresence.Plugins
             Init();
         }
 
+        /// <summary>
+        /// Method that gets called when registered
+        /// </summary>
         public virtual void Init()
         {
         }
@@ -109,6 +112,9 @@ namespace LabPresence.Plugins
             Init();
         }
 
+        /// <summary>
+        /// Method that gets called when registered
+        /// </summary>
         public virtual void Init()
         {
         }
