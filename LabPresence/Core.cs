@@ -206,7 +206,7 @@ namespace LabPresence
             Placeholders.RegisterPlaceholder("mlVersion", (_) => AppDomain.CurrentDomain?.GetAssemblies()?.FirstOrDefault(x => x.GetName().Name == "MelonLoader")?.GetName()?.Version?.ToString() ?? "N/A");
             Placeholders.RegisterPlaceholder("health", (_) => (Player.RigManager?.health?.curr_Health)?.ToString() ?? "0", 4f);
             Placeholders.RegisterPlaceholder("maxHealth", (_) => (Player.RigManager?.health?.max_Health).ToString() ?? "0");
-            Placeholders.RegisterPlaceholder("healthPercentage", (_) => $"{MathF.Floor((Player.RigManager?.health?.curr_Health ?? 0) / (Player.RigManager?.health?.max_Health ?? 0))}%", 4f);
+            Placeholders.RegisterPlaceholder("healthPercentage", (_) => $"{MathF.Floor(((Player.RigManager?.health?.curr_Health ?? 0) / (Player.RigManager?.health?.max_Health ?? 0)) * 100)}%", 4f);
             Placeholders.RegisterPlaceholder("fps", (_) => FPS.FramesPerSecond.ToString(), 4f);
             Placeholders.RegisterPlaceholder("operatingSystem", (_) => SystemInfo.operatingSystem);
             Placeholders.RegisterPlaceholder("codeModsCount", (_) => RegisteredMelons.Count.ToString());
