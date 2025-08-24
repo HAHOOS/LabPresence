@@ -221,7 +221,6 @@ namespace LabPresence
             if (!config.Use)
                 return true;
 
-            Core.Logger.Msg($"Update requested: {config.Details} / {config.State}");
             bool res = TrySetRichPresence(config.Details, config.State, type, party, secrets, largeImage, smallImage);
             if (res)
             {

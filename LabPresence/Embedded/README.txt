@@ -11,7 +11,7 @@ If you want to escape a placeholder, write for example \%test\% which in the res
 %mlVersion% - Current version of Melon Loader
 %health% - Current health of the player
 %maxHealth% - The maximum health of the player
-%healthPercentange% - Percentage of health
+%healthPercentage% - Percentage of health
 %fps% - FPS of the game
 %operatingSystem% - Name of the operating system
 %codeModsCount% - Amount of all MelonLoader mods & plugins
@@ -32,7 +32,7 @@ If you want to escape a placeholder, write for example \%test\% which in the res
 Currently there are a few placeholders that have a minimum delay set (4 seconds), because they change frequently.
 These ones are:
 	%health%
-	%healthPercentange%
+	%healthPercentage%
 	%fps%
 	%ammoLight%
 	%ammoMedium%
