@@ -44,6 +44,7 @@ namespace LabPresence.Plugins.Default
 
             Placeholders.RegisterPlaceholder("fusion_lobbyName", (_) => Fusion.GetLobbyName());
             Placeholders.RegisterPlaceholder("fusion_host", (_) => Fusion.GetHost());
+            Placeholders.RegisterPlaceholder("fusion_permissionLevel", (_) => Fusion.GetPermissionLevel());
             Placeholders.RegisterPlaceholder("fusion_currentPlayers", (_) => Fusion.GetPlayerCount().current.ToString());
             Placeholders.RegisterPlaceholder("fusion_maxPlayers", (_) => Fusion.GetPlayerCount().max.ToString());
             Placeholders.RegisterPlaceholder("fusion_privacy", (_) => Enum.GetName(Fusion.GetPrivacy()).Replace("_", " "));
@@ -337,6 +338,18 @@ namespace LabPresence.Plugins.Default
             if (!IsConnected) return "N/A";
             else return Internal_GetLobbyName();
         }
+
+        /// <summary>
+        /// Get the permission level of the local player
+        /// </summary>
+        public static string GetPermissionLevel()
+        {
+            if (!IsConnected) return "N/A";
+            else return Internal_GetPermissionLevel();
+        }
+
+        private static string Internal_GetPermissionLevel()
+            => LabFusion.Player.LocalPlayer.Metadata.PermissionLevel.GetValue();
 
         internal static string Internal_GetLobbyName()
         {

@@ -23,6 +23,7 @@ using System.Reflection;
 using System.Collections.Generic;
 using LabPresence.Plugins.Default;
 using LabPresence.Plugins;
+using Il2CppSLZ.Marrow.Interaction;
 
 namespace LabPresence
 {
@@ -184,6 +185,12 @@ namespace LabPresence
             }
         }
 
+        private static SpawnableCrate GetInHand(Handedness handType)
+        {
+            var hand = handType == Handedness.LEFT ? Player.LeftHand : Player.RightHand;
+            return hand.AttachedReceiver?.Host?.GetGrip()?._marrowEntity?._poolee?.SpawnableCrate;
+        }
+
         private static void AddDefaultPlaceholders()
         {
             Placeholders.RegisterPlaceholder("levelName", (args) =>
@@ -223,6 +230,11 @@ namespace LabPresence
             Placeholders.RegisterPlaceholder("ammoLight", (_) => AmmoInventory.Instance?._groupCounts["light"].ToString() ?? "0", 4f);
             Placeholders.RegisterPlaceholder("ammoMedium", (_) => AmmoInventory.Instance?._groupCounts["medium"].ToString() ?? "0", 4f);
             Placeholders.RegisterPlaceholder("ammoHeavy", (_) => AmmoInventory.Instance?._groupCounts["heavy"].ToString() ?? "0", 4f);
+
+            // Hands
+
+            Placeholders.RegisterPlaceholder("leftHand", (_) => RemoveUnityRichText(GetInHand(Handedness.LEFT)?.Title) ?? "N/A");
+            Placeholders.RegisterPlaceholder("rightHand", (_) => RemoveUnityRichText(GetInHand(Handedness.LEFT)?.Title) ?? "N/A");
 
             // Test placeholder
             Placeholders.RegisterPlaceholder("test_multiply", (args) =>
