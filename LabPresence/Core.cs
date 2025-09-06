@@ -6,9 +6,10 @@ using LabPresence.Helper;
 
 using UnityEngine;
 
-using Il2CppSLZ.Marrow.Warehouse;
-using Il2CppSLZ.Marrow.SceneStreaming;
 using Il2CppSLZ.Marrow;
+using Il2CppSLZ.Marrow.Warehouse;
+using Il2CppSLZ.Marrow.Interaction;
+using Il2CppSLZ.Marrow.SceneStreaming;
 
 using MelonLoader.Utils;
 using MelonLoader.Preferences;
@@ -16,16 +17,15 @@ using MelonLoader.Preferences;
 using System;
 using System.Linq;
 using System.IO;
-using System.Text.RegularExpressions;
-
-using BoneLib;
 using System.Reflection;
 using System.Collections.Generic;
-using LabPresence.Plugins.Default;
+using System.Text.RegularExpressions;
+
 using LabPresence.Plugins;
-using Il2CppSLZ.Marrow.Interaction;
 using LabPresence.Managers;
-using Il2CppInterop.Runtime.Attributes;
+using LabPresence.Plugins.Default;
+
+using BoneLib;
 
 namespace LabPresence
 {
@@ -42,7 +42,6 @@ namespace LabPresence
         /// <summary>
         /// The Discord RPC Client
         /// </summary>
-        [HideFromIl2Cpp]
         public static DiscordRpcClient Client { get; private set; }
 
         private const string ClientID = "1338522973421965382";
@@ -67,22 +66,6 @@ namespace LabPresence
 
             Logger = LoggerInstance;
 
-            LoggerInstance.Msg("Loading dependencies");
-
-            Load();
-
-            Initialize();
-        }
-
-        internal static void Load()
-        {
-            DependencyManager.TryLoadDependency("DiscordRPC", true);
-            DependencyManager.TryLoadDependency("Scriban.Signed", true);
-            DependenciesLoaded = true;
-        }
-
-        private void Initialize()
-        {
             LoggerInstance.Msg("Creating preferences");
             var dir = Directory.CreateDirectory(Path.Combine(MelonEnvironment.UserDataDirectory, "LabPresence"));
             Category = MelonPreferences.CreateCategory<LabPresence.Config.DefaultConfig>("LabPresenceConfig", "Lab Presence Config");
@@ -138,7 +121,7 @@ namespace LabPresence
                 Client.SynchronizeState();
             };
 
-            Client.OnConnectionEstablished += (_, e) => LoggerInstance.Msg($"Successfully established connection to pipe {e.ConnectedPipe}");
+            Client.OnConnectionEstablished += (_, e) => LoggerInstance.Msg($"Successfully established connection");
             Client.OnConnectionFailed += (_, e) => LoggerInstance.Error($"Failed to establish connection with pipe {e.FailedPipe}");
             Client.OnError += (_, e) => LoggerInstance.Error($"An unexpected error has occurred when sending a message, error: {e.Message}");
 
@@ -190,6 +173,23 @@ namespace LabPresence
             Overwrites.OnPreGame.Run();
 
             LoggerInstance.Msg("Initialized.");
+        }
+
+        /// <summary>
+        /// Runs before the melon gets initialized
+        /// </summary>
+        public override void OnEarlyInitializeMelon()
+        {
+            base.OnEarlyInitializeMelon();
+
+            Load();
+        }
+
+        internal static void Load()
+        {
+            DependencyManager.TryLoadDependency("DiscordRPC", true, false);
+            DependencyManager.TryLoadDependency("Scriban.Signed", true, false);
+            DependenciesLoaded = true;
         }
 
         private void RegisterURIScheme()
