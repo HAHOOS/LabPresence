@@ -5,13 +5,14 @@ using System.Text;
 
 using DiscordRPC;
 using DiscordRPC.Exceptions;
+using DiscordRPC.Helper;
 
 using LabPresence.Config;
 using LabPresence.Helper;
 
 using UnityEngine;
 
-namespace LabPresence
+namespace LabPresence.Managers
 {
     /// <summary>
     /// Class responsible for managing the Rich Presence
@@ -38,7 +39,7 @@ namespace LabPresence
         /// <summary>
         /// Set the timestamp for the Rich Presence
         /// </summary>
-        /// <param name="timestamp">The <see cref="LabPresence.Timestamp"/> to set</param>
+        /// <param name="timestamp">The <see cref="Managers.Timestamp"/> to set</param>
         /// <param name="autoUpdate">Should the timestamp be automatically updated</param>
         public static void SetTimestamp(Timestamp timestamp, bool autoUpdate = false)
         {
@@ -97,19 +98,19 @@ namespace LabPresence
         /// </summary>
         /// <param name="autoUpdate">Should the timestamp be automatically updated</param>
         public static void SetTimestampStartToNow(bool autoUpdate = false)
-            => SetTimestamp(LabPresence.Timestamp.Now, autoUpdate);
+            => SetTimestamp(Timestamp.Now, autoUpdate);
 
         /// <summary>
         /// Set the timestamp to display the current time, like "16:50:00"
         /// </summary>
         /// <param name="autoUpdate">Should the timestamp be automatically updated</param>
         public static void SetTimestampToCurrentTime(bool autoUpdate = false)
-            => SetTimestamp(LabPresence.Timestamp.CurrentTime, autoUpdate);
+            => SetTimestamp(Timestamp.CurrentTime, autoUpdate);
 
         /// <summary>
         /// Set the <see cref="OverrideTimestamp"/>
         /// </summary>
-        /// <param name="timestamp">The <see cref="LabPresence.Timestamp"/> to set</param>
+        /// <param name="timestamp">The <see cref="Managers.Timestamp"/> to set</param>
         /// <param name="autoUpdate">Should the timestamp be automatically updated</param>
         public static void SetOverrideTimestamp(TimestampOverride timestamp, bool autoUpdate = false)
         {
@@ -128,6 +129,33 @@ namespace LabPresence
         }
 
         /// <summary>
+        /// Attempts to call <see cref="StringTools.GetNullOrString(string)"/> on the string and return the result, if its within a valid length.
+        /// </summary>
+        /// <param name="str">The string to check</param>
+        /// <param name="result">The formatted string result</param>
+        /// <param name="useBytes">True if you need to validate the string by byte length</param>
+        /// <param name="length">The maximum number of bytes/characters the string can take up</param>
+        /// <param name="encoding">The encoding to count the bytes with, optional</param>
+        /// <returns>True if the string fits within the number of bytes</returns>
+        internal static bool ValidateString(string str, out string result, bool useBytes, int length, Encoding encoding = null)
+        {
+            result = str;
+            if (str == null)
+                return true;
+
+            //Trim the string, for the best chance of fitting
+            var s = str.Trim();
+
+            //Make sure it fits
+            if ((useBytes && !s.WithinLength(length, encoding)) || s.Length > length)
+                return false;
+
+            //Make sure its not empty
+            result = s.GetNullOrString();
+            return true;
+        }
+
+        /// <summary>
         /// Set the current Rich Presence
         /// </summary>
         /// <param name="details"><inheritdoc cref="RPCConfig.Details"/></param>
@@ -143,12 +171,12 @@ namespace LabPresence
                 throw new InvalidOperationException("The RPC client is not initialized!");
 
             largeImage ??= new("icon", "BONELAB");
-            if (!RichPresence.ValidateString(Core.RemoveUnityRichText(details?.ApplyPlaceholders()), out string det, 128, Encoding.UTF8) ||
-                !RichPresence.ValidateString(Core.RemoveUnityRichText(state?.ApplyPlaceholders()), out string stat, 128, Encoding.UTF8) ||
-                !RichPresence.ValidateString(Core.RemoveUnityRichText(largeImage?.ToolTip?.ApplyPlaceholders()), out _, 128, Encoding.UTF8) ||
-                !RichPresence.ValidateString(Core.RemoveUnityRichText(smallImage?.ToolTip?.ApplyPlaceholders()), out _, 128, Encoding.UTF8))
+            if (!ValidateString(Core.RemoveUnityRichText(details?.ApplyPlaceholders()), out string det, false, 128, Encoding.UTF8) ||
+                !ValidateString(Core.RemoveUnityRichText(state?.ApplyPlaceholders()), out string stat, false, 128, Encoding.UTF8) ||
+                !ValidateString(Core.RemoveUnityRichText(largeImage?.ToolTip?.ApplyPlaceholders()), out _, false, 128, Encoding.UTF8) ||
+                !ValidateString(Core.RemoveUnityRichText(smallImage?.ToolTip?.ApplyPlaceholders()), out _, false, 128, Encoding.UTF8))
             {
-                throw new StringOutOfRangeException("State, Details and/or an asset tooltip is/are over 128 bytes which Rich Presence cannot handle, try to lower the amount of characters", 0, 128);
+                throw new ArgumentOutOfRangeException("State, Details and/or an asset tooltip is/are over 128 bytes which Rich Presence cannot handle, try to lower the amount of characters");
             }
             Core.Client.SetPresence(new DiscordRPC.RichPresence()
             {

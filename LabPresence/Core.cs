@@ -24,6 +24,8 @@ using System.Collections.Generic;
 using LabPresence.Plugins.Default;
 using LabPresence.Plugins;
 using Il2CppSLZ.Marrow.Interaction;
+using LabPresence.Managers;
+using Il2CppInterop.Runtime.Attributes;
 
 namespace LabPresence
 {
@@ -40,6 +42,7 @@ namespace LabPresence
         /// <summary>
         /// The Discord RPC Client
         /// </summary>
+        [HideFromIl2Cpp]
         public static DiscordRpcClient Client { get; private set; }
 
         private const string ClientID = "1338522973421965382";
@@ -64,6 +67,22 @@ namespace LabPresence
 
             Logger = LoggerInstance;
 
+            LoggerInstance.Msg("Loading dependencies");
+
+            Load();
+
+            Initialize();
+        }
+
+        internal static void Load()
+        {
+            DependencyManager.TryLoadDependency("DiscordRPC", true);
+            DependencyManager.TryLoadDependency("Scriban.Signed", true);
+            DependenciesLoaded = true;
+        }
+
+        private void Initialize()
+        {
             LoggerInstance.Msg("Creating preferences");
             var dir = Directory.CreateDirectory(Path.Combine(MelonEnvironment.UserDataDirectory, "LabPresence"));
             Category = MelonPreferences.CreateCategory<LabPresence.Config.DefaultConfig>("LabPresenceConfig", "Lab Presence Config");
@@ -193,7 +212,7 @@ namespace LabPresence
 
         private static void AddDefaultPlaceholders()
         {
-            Placeholders.RegisterPlaceholder("levelName", (args) =>
+            PlaceholderManager.RegisterPlaceholder("levelName", (args) =>
             {
                 var level = SceneStreamer.Session?.Level?.Title;
                 if (level == null)
@@ -208,16 +227,16 @@ namespace LabPresence
 
                 return level;
             });
-            Placeholders.RegisterPlaceholder("avatarName", (_) => Player.RigManager?.AvatarCrate?.Crate?.Title ?? "N/A");
-            Placeholders.RegisterPlaceholder("platform", (_) => MelonUtils.CurrentPlatform == (MelonPlatformAttribute.CompatiblePlatforms)3 ? "Quest" : "PCVR");
-            Placeholders.RegisterPlaceholder("mlVersion", (_) => AppDomain.CurrentDomain?.GetAssemblies()?.FirstOrDefault(x => x.GetName().Name == "MelonLoader")?.GetName()?.Version?.ToString() ?? "N/A");
-            Placeholders.RegisterPlaceholder("health", (_) => (Player.RigManager?.health?.curr_Health)?.ToString() ?? "0", 4f);
-            Placeholders.RegisterPlaceholder("maxHealth", (_) => (Player.RigManager?.health?.max_Health).ToString() ?? "0");
-            Placeholders.RegisterPlaceholder("healthPercentage", (_) => $"{MathF.Floor(((Player.RigManager?.health?.curr_Health ?? 0) / (Player.RigManager?.health?.max_Health ?? 0)) * 100)}%", 4f);
-            Placeholders.RegisterPlaceholder("fps", (_) => FPS.FramesPerSecond.ToString(), 4f);
-            Placeholders.RegisterPlaceholder("operatingSystem", (_) => SystemInfo.operatingSystem);
-            Placeholders.RegisterPlaceholder("codeModsCount", (_) => RegisteredMelons.Count.ToString());
-            Placeholders.RegisterPlaceholder("modsCount", (_) =>
+            PlaceholderManager.RegisterPlaceholder("avatarName", (_) => Player.RigManager?.AvatarCrate?.Crate?.Title ?? "N/A");
+            PlaceholderManager.RegisterPlaceholder("platform", (_) => MelonUtils.CurrentPlatform == (MelonPlatformAttribute.CompatiblePlatforms)3 ? "Quest" : "PCVR");
+            PlaceholderManager.RegisterPlaceholder("mlVersion", (_) => AppDomain.CurrentDomain?.GetAssemblies()?.FirstOrDefault(x => x.GetName().Name == "MelonLoader")?.GetName()?.Version?.ToString() ?? "N/A");
+            PlaceholderManager.RegisterPlaceholder("health", (_) => (Player.RigManager?.health?.curr_Health)?.ToString() ?? "0", 4f);
+            PlaceholderManager.RegisterPlaceholder("maxHealth", (_) => (Player.RigManager?.health?.max_Health).ToString() ?? "0");
+            PlaceholderManager.RegisterPlaceholder("healthPercentage", (_) => $"{MathF.Floor(((Player.RigManager?.health?.curr_Health ?? 0) / (Player.RigManager?.health?.max_Health ?? 0)) * 100)}%", 4f);
+            PlaceholderManager.RegisterPlaceholder("fps", (_) => FPS.FramesPerSecond.ToString(), 4f);
+            PlaceholderManager.RegisterPlaceholder("operatingSystem", (_) => SystemInfo.operatingSystem);
+            PlaceholderManager.RegisterPlaceholder("codeModsCount", (_) => RegisteredMelons.Count.ToString());
+            PlaceholderManager.RegisterPlaceholder("modsCount", (_) =>
             {
                 if (!AssetWarehouse.ready || AssetWarehouse.Instance == null)
                     return "0";
@@ -227,17 +246,17 @@ namespace LabPresence
 
             // Ammo
             // Not sure why would anyone wanna use this placeholder
-            Placeholders.RegisterPlaceholder("ammoLight", (_) => AmmoInventory.Instance?._groupCounts["light"].ToString() ?? "0", 4f);
-            Placeholders.RegisterPlaceholder("ammoMedium", (_) => AmmoInventory.Instance?._groupCounts["medium"].ToString() ?? "0", 4f);
-            Placeholders.RegisterPlaceholder("ammoHeavy", (_) => AmmoInventory.Instance?._groupCounts["heavy"].ToString() ?? "0", 4f);
+            PlaceholderManager.RegisterPlaceholder("ammoLight", (_) => AmmoInventory.Instance?._groupCounts["light"].ToString() ?? "0", 4f);
+            PlaceholderManager.RegisterPlaceholder("ammoMedium", (_) => AmmoInventory.Instance?._groupCounts["medium"].ToString() ?? "0", 4f);
+            PlaceholderManager.RegisterPlaceholder("ammoHeavy", (_) => AmmoInventory.Instance?._groupCounts["heavy"].ToString() ?? "0", 4f);
 
             // Hands
 
-            Placeholders.RegisterPlaceholder("leftHand", (_) => RemoveUnityRichText(GetInHand(Handedness.LEFT)?.Title) ?? "N/A");
-            Placeholders.RegisterPlaceholder("rightHand", (_) => RemoveUnityRichText(GetInHand(Handedness.LEFT)?.Title) ?? "N/A");
+            PlaceholderManager.RegisterPlaceholder("leftHand", (_) => RemoveUnityRichText(GetInHand(Handedness.LEFT)?.Title) ?? "N/A");
+            PlaceholderManager.RegisterPlaceholder("rightHand", (_) => RemoveUnityRichText(GetInHand(Handedness.LEFT)?.Title) ?? "N/A");
 
             // Test placeholder
-            Placeholders.RegisterPlaceholder("test_multiply", (args) =>
+            PlaceholderManager.RegisterPlaceholder("test_multiply", (args) =>
             {
                 if (args == null || args.Length == 0)
                     return "0";
@@ -280,6 +299,7 @@ namespace LabPresence
         private string lastState, lastDetails;
 
         public static float RequiredDelay { get; set; }
+        public static bool DependenciesLoaded { get; private set; }
 
         private int lastDay = 0;
 
@@ -290,6 +310,14 @@ namespace LabPresence
         {
             base.OnUpdate();
 
+            if (!DependenciesLoaded)
+                return;
+
+            _OnUpdate();
+        }
+
+        private void _OnUpdate()
+        {
             if (Client?.IsInitialized == true)
                 Client?.Invoke();
 

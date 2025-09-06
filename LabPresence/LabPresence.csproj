@@ -21,6 +21,12 @@
 
 	</PropertyGroup>
 	<ItemGroup>
+	  <None Remove="Dependencies\DiscordRPC.dll" />
+	  <None Remove="Dependencies\Scriban.Signed.dll" />
+	</ItemGroup>
+	<ItemGroup>
+	  <EmbeddedResource Include="Dependencies\DiscordRPC.dll" />
+	  <EmbeddedResource Include="Dependencies\Scriban.Signed.dll" />
 	  <EmbeddedResource Include="Embedded\README.txt" />
 	</ItemGroup>
 	<ItemGroup>
@@ -72,6 +78,9 @@
 		<Reference Include="Tomlet">
 			<HintPath>$(BONELAB_DIR)\MelonLoader\net6\Tomlet.dll</HintPath>
 		</Reference>
+		<Reference Include="Mono.Cecil">
+			<HintPath>$(BONELAB_DIR)\MelonLoader\net6\Mono.Cecil.dll</HintPath>
+		</Reference>
 		<Reference Include="0Harmony">
 			<HintPath>$(BONELAB_DIR)\MelonLoader\net6\0Harmony.dll</HintPath>
 		</Reference>
@@ -83,7 +92,18 @@
 		</Reference>
 	</ItemGroup>
 
+	<ItemGroup>
+	  <PackageReference Include="DiscordRichPresence" Version="1.6.1.70" GeneratePathProperty="true" />
+	  <PackageReference Include="Scriban.Signed" Version="6.2.1" GeneratePathProperty="true" />
+	</ItemGroup>
+
+	<Target Name="PreCompile" BeforeTargets="Compile">
+		<Exec Command="COPY &quot;$(PkgDiscordRichPresence)\lib\netstandard2.0\DiscordRPC.dll&quot; &quot;$(ProjectDir)Dependencies&quot;" />
+		<Exec Command="COPY &quot;$(PkgScriban_Signed)\lib\netstandard2.0\Scriban.Signed.dll&quot; &quot;$(ProjectDir)Dependencies&quot;" />
+	</Target>
+
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="COPY &quot;$(TargetPath)&quot; &quot;$(BONELAB_DIR)\Mods&quot;" />
+		<Exec Command="ECHO Copying $(TargetName).dll to Mods folder&#xD;&#xA; COPY &quot;$(TargetPath)&quot; &quot;$(BONELAB_DIR)\Mods&quot;" />
+		<Exec Command="ECHO Copying $(TargetName).pdb to Mods folder&#xD;&#xA; COPY &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(BONELAB_DIR)\Mods&quot;" />
 	</Target>
 </Project>

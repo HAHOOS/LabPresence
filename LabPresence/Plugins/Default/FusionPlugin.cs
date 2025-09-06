@@ -14,6 +14,7 @@ using Il2CppSLZ.Marrow.SceneStreaming;
 
 using LabPresence.Config;
 using LabPresence.Helper;
+using LabPresence.Managers;
 
 using MelonLoader;
 
@@ -42,12 +43,12 @@ namespace LabPresence.Plugins.Default
                 return;
             }
 
-            Placeholders.RegisterPlaceholder("fusion_lobbyName", (_) => Fusion.GetLobbyName());
-            Placeholders.RegisterPlaceholder("fusion_host", (_) => Fusion.GetHost());
-            Placeholders.RegisterPlaceholder("fusion_permissionLevel", (_) => Fusion.GetPermissionLevel());
-            Placeholders.RegisterPlaceholder("fusion_currentPlayers", (_) => Fusion.GetPlayerCount().current.ToString());
-            Placeholders.RegisterPlaceholder("fusion_maxPlayers", (_) => Fusion.GetPlayerCount().max.ToString());
-            Placeholders.RegisterPlaceholder("fusion_privacy", (_) => Enum.GetName(Fusion.GetPrivacy()).Replace("_", " "));
+            PlaceholderManager.RegisterPlaceholder("fusion_lobbyName", (_) => Fusion.GetLobbyName());
+            PlaceholderManager.RegisterPlaceholder("fusion_host", (_) => Fusion.GetHost());
+            PlaceholderManager.RegisterPlaceholder("fusion_permissionLevel", (_) => Fusion.GetPermissionLevel());
+            PlaceholderManager.RegisterPlaceholder("fusion_currentPlayers", (_) => Fusion.GetPlayerCount().current.ToString());
+            PlaceholderManager.RegisterPlaceholder("fusion_maxPlayers", (_) => Fusion.GetPlayerCount().max.ToString());
+            PlaceholderManager.RegisterPlaceholder("fusion_privacy", (_) => Enum.GetName(Fusion.GetPrivacy()).Replace("_", " "));
 
             Overwrites.OnLevelLoaded.RegisterOverwrite(OnLevelLoaded, out _, 100);
             Overwrites.OnLevelLoaded.RegisterOverwrite(OnLevelLoading, out _, 100);
