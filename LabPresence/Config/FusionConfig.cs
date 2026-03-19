@@ -46,12 +46,12 @@ namespace LabPresence.Config
         /// Config used when a level gets loaded and you are in a lobby
         /// </summary>
         [TomlProperty("LevelLoaded")]
-        public RPCConfig LevelLoaded { get; set; } = new("%levelName%", "%fusion_lobbyName%");
+        public RPCConfig LevelLoaded { get; set; } = new("{{ levelName }}", "{{ fusion_lobbyName }}");
 
         /// <summary>
         /// Config used when a level is loading and you are in a lobby
         /// </summary>
         [TomlProperty("LevelLoading")]
-        public RPCConfig LevelLoading { get; set; } = new("Loading %levelName%", "%fusion_lobbyName%");
+        public RPCConfig LevelLoading { get; set; } = new("Loading {{ levelName }}", "{{ fusion_lobbyName }}");
     }
 }

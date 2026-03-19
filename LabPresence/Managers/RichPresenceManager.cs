@@ -37,19 +37,6 @@ namespace LabPresence.Managers
         public static TimestampOverride OverrideTimestamp { get; private set; }
 
         /// <summary>
-        /// Set the timestamp for the Rich Presence
-        /// </summary>
-        /// <param name="timestamp">The <see cref="Managers.Timestamp"/> to set</param>
-        /// <param name="autoUpdate">Should the timestamp be automatically updated</param>
-        public static void SetTimestamp(Timestamp timestamp, bool autoUpdate = false)
-        {
-            Timestamp = timestamp;
-
-            if (autoUpdate)
-                UpdateTimestamp();
-        }
-
-        /// <summary>
         /// Updates the timestamp on the Rich Presence to be up to date with current config
         /// </summary>
         public static void UpdateTimestamp()
@@ -71,7 +58,7 @@ namespace LabPresence.Managers
                     time = 0f;
                     old = CurrentPresence;
                 }
-                var delay = CurrentPresence.GetMinimumDelay();
+                const float delay = 5f;
                 if (time >= delay)
                 {
                     TrySetRichPresence(CurrentPresence.Config, CurrentPresence.Type, CurrentPresence.Party, CurrentPresence.Secrets, CurrentPresence.LargeImage, CurrentPresence.SmallImage);
@@ -92,6 +79,19 @@ namespace LabPresence.Managers
         /// <param name="autoUpdate">Should the timestamp be automatically updated</param>
         public static void SetTimestamp(ulong? start, ulong? end, bool autoUpdate = false)
             => SetTimestamp(new(start, end), autoUpdate);
+
+        /// <summary>
+        /// Set the timestamp for the Rich Presence
+        /// </summary>
+        /// <param name="timestamp">The <see cref="Managers.Timestamp"/> to set</param>
+        /// <param name="autoUpdate">Should the timestamp be automatically updated</param>
+        public static void SetTimestamp(Timestamp timestamp, bool autoUpdate = false)
+        {
+            Timestamp = timestamp;
+
+            if (autoUpdate)
+                UpdateTimestamp();
+        }
 
         /// <summary>
         /// Set the timestamp to start from now
@@ -176,7 +176,9 @@ namespace LabPresence.Managers
                 !ValidateString(Core.RemoveUnityRichText(largeImage?.ToolTip?.ApplyPlaceholders()), out _, false, 128, Encoding.UTF8) ||
                 !ValidateString(Core.RemoveUnityRichText(smallImage?.ToolTip?.ApplyPlaceholders()), out _, false, 128, Encoding.UTF8))
             {
-                throw new ArgumentOutOfRangeException("State, Details and/or an asset tooltip is/are over 128 bytes which Rich Presence cannot handle, try to lower the amount of characters");
+                throw new ArgumentException(
+                    message: "State, Details and/or an asset tooltip is/are over 128 bytes which Rich Presence cannot handle, try to lower the amount of characters"
+                );
             }
             Core.Client.SetPresence(new DiscordRPC.RichPresence()
             {
@@ -287,7 +289,7 @@ namespace LabPresence.Managers
         /// <param name="cache">Should the avatar be written be cached and on the next request use the cache</param>
         public static Texture2D GetAvatar(User user, User.AvatarSize size = User.AvatarSize.x512, bool cache = false)
         {
-            ArgumentNullException.ThrowIfNull(user, nameof(user));
+            ArgumentNullException.ThrowIfNull(user);
 
             if (cache && _avatarCache.ContainsKey(user.ID) && _avatarCache[user.ID] != null)
                 return _avatarCache[user.ID];

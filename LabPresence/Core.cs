@@ -26,6 +26,7 @@ using LabPresence.Managers;
 using LabPresence.Plugins.Default;
 
 using BoneLib;
+using Scriban.Runtime;
 
 namespace LabPresence
 {
@@ -97,9 +98,6 @@ namespace LabPresence
                 LoggerInstance.Error($"An unexpected error has occurred while creating README.txt, exception:\n{ex}");
             }
 
-            if (Config.RefreshDelay <= 0.1)
-                LoggerInstance.Error("Hey, calm down. You shouldn't be spamming Discord servers! Although most of the requests won't be sent because they are identical presences, still please make it higher");
-
             LoggerInstance.Msg("Adding placeholders");
 
             AddDefaultPlaceholders();
@@ -121,7 +119,7 @@ namespace LabPresence
                 Client.SynchronizeState();
             };
 
-            Client.OnConnectionEstablished += (_, e) => LoggerInstance.Msg($"Successfully established connection");
+            Client.OnConnectionEstablished += (_, _) => LoggerInstance.Msg("Successfully established connection");
             Client.OnConnectionFailed += (_, e) => LoggerInstance.Error($"Failed to establish connection with pipe {e.FailedPipe}");
             Client.OnError += (_, e) => LoggerInstance.Error($"An unexpected error has occurred when sending a message, error: {e.Message}");
 
@@ -148,10 +146,9 @@ namespace LabPresence
                 Logger.Error($"An unexpected error has occurred while attempting to register the Fusion Plugin, exception:\n{ex}");
             }
 
-            //LevelHooks.Init();
             LevelHooks.OnLevelLoaded += (_) =>
             {
-                if (Config.TimeMode == LabPresence.Config.DefaultConfig.TimeModeEnum.Level)
+                if (Config.TimeMode == LabPresence.Config.TimeMode.Level)
                     RichPresenceManager.SetTimestampStartToNow();
 
                 Overwrites.OnLevelLoaded.Run();
@@ -162,10 +159,7 @@ namespace LabPresence
 
             AssetWarehouse.OnReady((Il2CppSystem.Action)Overwrites.OnAssetWarehouseLoaded.Run);
 
-            var time = DateTime.Now;
-            lastDay = time.Day;
-
-            if (Config.TimeMode != LabPresence.Config.DefaultConfig.TimeModeEnum.CurrentTime)
+            if (Config.TimeMode != LabPresence.Config.TimeMode.CurrentTime)
                 RichPresenceManager.SetTimestampStartToNow();
             else
                 RichPresenceManager.SetTimestampToCurrentTime();
@@ -212,65 +206,48 @@ namespace LabPresence
 
         private static void AddDefaultPlaceholders()
         {
-            PlaceholderManager.RegisterPlaceholder("levelName", (args) =>
+            PlaceholderManager.RegisterPlaceholder("default", () =>
             {
-                var level = SceneStreamer.Session?.Level?.Title;
-                if (level == null)
-                    return "N/A";
+                var modsCount = 0;
+                if (AssetWarehouse.ready && AssetWarehouse.Instance != null)
+                    modsCount = (AssetWarehouse.Instance.PalletCount() - AssetWarehouse.Instance.gamePallets.Count);
 
-                // The argument indicates if to remove numbers
-                if (args?.Length > 0 && args[0] == bool.FalseString)
-                    return level;
-
-                if (Config.RemoveLevelNumbers)
-                    level = RemoveBONELABLevelNumbers(level);
-
-                return level;
-            });
-            PlaceholderManager.RegisterPlaceholder("avatarName", (_) => Player.RigManager?.AvatarCrate?.Crate?.Title ?? "N/A");
-            PlaceholderManager.RegisterPlaceholder("platform", (_) => MelonUtils.CurrentPlatform == (MelonPlatformAttribute.CompatiblePlatforms)3 ? "Quest" : "PCVR");
-            PlaceholderManager.RegisterPlaceholder("mlVersion", (_) => AppDomain.CurrentDomain?.GetAssemblies()?.FirstOrDefault(x => x.GetName().Name == "MelonLoader")?.GetName()?.Version?.ToString() ?? "N/A");
-            PlaceholderManager.RegisterPlaceholder("health", (_) => (Player.RigManager?.health?.curr_Health)?.ToString() ?? "0", 4f);
-            PlaceholderManager.RegisterPlaceholder("maxHealth", (_) => (Player.RigManager?.health?.max_Health).ToString() ?? "0");
-            PlaceholderManager.RegisterPlaceholder("healthPercentage", (_) => $"{MathF.Floor(((Player.RigManager?.health?.curr_Health ?? 0) / (Player.RigManager?.health?.max_Health ?? 0)) * 100)}%", 4f);
-            PlaceholderManager.RegisterPlaceholder("fps", (_) => FPS.FramesPerSecond.ToString(), 4f);
-            PlaceholderManager.RegisterPlaceholder("operatingSystem", (_) => SystemInfo.operatingSystem);
-            PlaceholderManager.RegisterPlaceholder("codeModsCount", (_) => RegisteredMelons.Count.ToString());
-            PlaceholderManager.RegisterPlaceholder("modsCount", (_) =>
-            {
-                if (!AssetWarehouse.ready || AssetWarehouse.Instance == null)
-                    return "0";
-
-                return (AssetWarehouse.Instance.PalletCount() - AssetWarehouse.Instance.gamePallets.Count).ToString();
-            });
-
-            // Ammo
-            // Not sure why would anyone wanna use this placeholder
-            PlaceholderManager.RegisterPlaceholder("ammoLight", (_) => AmmoInventory.Instance?._groupCounts["light"].ToString() ?? "0", 4f);
-            PlaceholderManager.RegisterPlaceholder("ammoMedium", (_) => AmmoInventory.Instance?._groupCounts["medium"].ToString() ?? "0", 4f);
-            PlaceholderManager.RegisterPlaceholder("ammoHeavy", (_) => AmmoInventory.Instance?._groupCounts["heavy"].ToString() ?? "0", 4f);
-
-            // Hands
-
-            PlaceholderManager.RegisterPlaceholder("leftHand", (_) => RemoveUnityRichText(GetInHand(Handedness.LEFT)?.Title) ?? "N/A");
-            PlaceholderManager.RegisterPlaceholder("rightHand", (_) => RemoveUnityRichText(GetInHand(Handedness.LEFT)?.Title) ?? "N/A");
-
-            // Test placeholder
-            PlaceholderManager.RegisterPlaceholder("test_multiply", (args) =>
-            {
-                if (args == null || args.Length == 0)
-                    return "0";
-
-                List<int> nums = [];
-                foreach (var item in args)
+                var scriptObject = new ScriptObject
                 {
-                    if (int.TryParse(item, out int res))
-                        nums.Add(res);
-                }
-                int current = 1;
-                nums.ForEach(x => current *= x);
-                return current.ToString();
+                    { "level", new ScribanCrate(SceneStreamer.Session?.Level)  },
+                    { "levelName", CleanLevelName() },
+                    { "platform", MelonUtils.CurrentPlatform == MelonPlatformAttribute.CompatiblePlatforms.ANDROID ? "Quest" : "PCVR" },
+                    { "mlVersion", AppDomain.CurrentDomain?.GetAssemblies()?.FirstOrDefault(x => x.GetName().Name == "MelonLoader")?.GetName()?.Version?.ToString() ?? "N/A" },
+                    { "health", Player.RigManager?.health?.curr_Health ?? 0 },
+                    { "maxHealth", Player.RigManager?.health?.max_Health ?? 0  },
+                    { "healthPercentage", MathF.Floor(((Player.RigManager?.health?.curr_Health ?? 0) / (Player.RigManager?.health?.max_Health ?? 0)) * 100) },
+                    { "fps", FPS.FramesPerSecond },
+                    { "operatingSystem", SystemInfo.operatingSystem },
+                    { "avatar", new ScribanCrate(Player.RigManager?.AvatarCrate?.Crate) },
+                    { "avatarName", RemoveUnityRichText(Player.RigManager?.AvatarCrate?.Crate?.Title ?? "N/A")  },
+                    { "leftHand", new ScribanCrate(GetInHand(Handedness.LEFT))  },
+                    { "rightHand", new ScribanCrate(GetInHand(Handedness.RIGHT)) },
+                    { "codeModsCount", RegisteredMelons.Count },
+                    { "modsCount", modsCount },
+                    { "ammoLight", AmmoInventory.Instance?._groupCounts["light"] ?? 0 },
+                    { "ammoMedium", AmmoInventory.Instance?._groupCounts["medium"] ?? 0  },
+                    { "ammoHeavy", AmmoInventory.Instance?._groupCounts["heavy"] ?? 0 }
+                };
+
+                return scriptObject;
             });
+        }
+
+        private static string CleanLevelName()
+        {
+            var level = SceneStreamer.Session?.Level?.Title;
+            if (level == null)
+                return "N/A";
+
+            if (Config.RemoveLevelNumbers)
+                level = RemoveBONELABLevelNumbers(level);
+
+            return level;
         }
 
         private static float _elapsedSecondsDateCheck = 0;
@@ -296,12 +273,10 @@ namespace LabPresence
         public static string RemoveBONELABLevelNumbers(string levelName)
             => Regex.Replace(levelName, "[0-9][0-9] - ", string.Empty);
 
-        private string lastState, lastDetails;
-
-        public static float RequiredDelay { get; set; }
+        private static string lastState, lastDetails;
         public static bool DependenciesLoaded { get; private set; }
 
-        private int lastDay = 0;
+        private static int lastDay = -1;
 
         /// <summary>
         /// Runs every frame
@@ -313,10 +288,10 @@ namespace LabPresence
             if (!DependenciesLoaded)
                 return;
 
-            _OnUpdate();
+            Internal_OnUpdate();
         }
 
-        private void _OnUpdate()
+        private static void Internal_OnUpdate()
         {
             if (Client?.IsInitialized == true)
                 Client?.Invoke();
@@ -327,12 +302,18 @@ namespace LabPresence
 
             _elapsedSecondsDateCheck += Time.deltaTime;
 
+            if (lastDay == -1)
+            {
+                var time = DateTime.Now;
+                lastDay = time.Day;
+            }
+
             if (RichPresenceManager.CurrentConfig != null)
             {
                 if (_elapsedSecondsDateCheck >= 2f)
                 {
                     _elapsedSecondsDateCheck = 0;
-                    if (Config.TimeMode == LabPresence.Config.DefaultConfig.TimeModeEnum.CurrentTime)
+                    if (Config.TimeMode == LabPresence.Config.TimeMode.CurrentTime)
                     {
                         var now = DateTime.Now;
                         if (now.Day != lastDay)
@@ -347,7 +328,6 @@ namespace LabPresence
                 {
                     lastDetails = RichPresenceManager.CurrentConfig.Details;
                     lastState = RichPresenceManager.CurrentConfig.State;
-                    RequiredDelay = RichPresenceManager.CurrentConfig.GetMinimumDelay();
                 }
             }
         }
