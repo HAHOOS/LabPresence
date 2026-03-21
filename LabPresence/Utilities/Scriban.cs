@@ -6,7 +6,7 @@ using Il2CppSLZ.Marrow.Warehouse;
 using Scriban;
 using Scriban.Runtime;
 
-namespace LabPresence
+namespace LabPresence.Utilities
 {
     public class ScribanCrate
     {

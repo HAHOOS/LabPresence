@@ -4,36 +4,14 @@
 		<LangVersion>latest</LangVersion>
 
 		<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
-		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>$(SolutionDir)\key.snk</AssemblyOriginatorKeyFile>
-		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<Title>LabPresence</Title>
-		<Version>1.1.0</Version>
-		<Description>Adds Discord Rich Presence to BONELAB</Description>
-		<PackageIcon>icon.png</PackageIcon>
-		<PackageReadmeFile>README_NoHTML.md</PackageReadmeFile>
-		<RepositoryUrl>https://github.com/HAHOOS/LabPresence</RepositoryUrl>
-		<PackageTags></PackageTags>
-		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 
 	</PropertyGroup>
-	<ItemGroup>
-		<None Include="..\icon.png">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-		<None Include="..\LICENSE.txt">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-		<None Include="..\README_NoHTML.md">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-	</ItemGroup>
+
 
 	<ItemGroup>
 		<Reference Include="Assembly-CSharp">

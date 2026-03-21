@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 
+using BoneLib.BoneMenu;
 using BoneLib.Notifications;
 
 using DiscordRPC;
@@ -30,6 +31,10 @@ namespace LabPresence.Plugins.Default
         public override SemVersion Version => new(1, 0, 0);
 
         public override string Author => "HAHOOS";
+
+        public override bool CreatesMenu => true;
+
+        public override Color MenuColor => Color.cyan;
 
         internal static FusionPlugin Instance { get; set; }
 
@@ -63,6 +68,20 @@ namespace LabPresence.Plugins.Default
 
             MelonEvents.OnUpdate.Subscribe(Update);
             HasFusion();
+        }
+
+        public override void PopulateMenu(Page page)
+        {
+            page.CreateBool("Override Time", Color.yellow, GetConfig().OverrideTimeToLobby, (val) => { GetConfig().OverrideTimeToLobby = val; Category.SaveToFile(false); Fusion.SetTimestamp(false); })
+                .SetTooltip("If the time mode will be set to 'Level', when in a fusion lobby it will override the time to display how long you are in the lobby instead of the level");
+            page.CreateBool("Show Join Request Pop Up", Color.cyan, GetConfig().ShowJoinRequestPopUp, (val) => { GetConfig().ShowJoinRequestPopUp = val; Category.SaveToFile(false); })
+                .SetTooltip("If true, a notification will be shown when someone requests to join your server");
+            page.CreateBool("Allow Players To Invite", Color.white, GetConfig().AllowPlayersToInvite, (val) => { GetConfig().AllowPlayersToInvite = val; Category.SaveToFile(false); })
+                .SetTooltip("If true, when hosting a private server, players will be able to let others join the server through Discord");
+            page.CreateBool("Show Custom Gamemode Tooltips", MenuManager.FromRGB(191, 255, 0), GetConfig().ShowCustomGamemodeToolTips, (val) => { GetConfig().ShowCustomGamemodeToolTips = val; Category.SaveToFile(false); })
+                .SetTooltip("If true, gamemodes that support custom tooltips will display custom text on the small icon. Disabling this option will cause the tooltip to only show the name of the gamemode");
+            page.CreateBool("Joins", Color.cyan, GetConfig().Joins, (val) => { GetConfig().Joins = val; Category.SaveToFile(false); })
+                .SetTooltip("If true, the rich presence will allow discord users to join your server when available, otherwise if false, the join button will never be shown");
         }
 
         private void HasFusion()
@@ -263,6 +282,8 @@ namespace LabPresence.Plugins.Default
     /// </summary>
     public static class Fusion
     {
+        internal static DateTimeOffset LobbyLaunch { get; set; }
+
         private const string AllowKey = "LabPresence.AllowInvites";
 
         /// <summary>
@@ -666,8 +687,8 @@ namespace LabPresence.Plugins.Default
             LabFusion.Utilities.MultiplayerHooking.OnDisconnected -= Update;
             LabFusion.Utilities.MultiplayerHooking.OnDisconnected += Update;
 
-            LabFusion.Utilities.MultiplayerHooking.OnJoinedServer += SetTimestamp;
-            LabFusion.Utilities.MultiplayerHooking.OnStartedServer += SetTimestamp;
+            LabFusion.Utilities.MultiplayerHooking.OnJoinedServer += OnLobby;
+            LabFusion.Utilities.MultiplayerHooking.OnStartedServer += OnLobby;
 
             LabFusion.SDK.Gamemodes.GamemodeManager.OnGamemodeStarted += () => RichPresenceManager.SetOverrideTimestamp(new(GetGamemodeOverrideTime(), "fusion"), true);
             LabFusion.SDK.Gamemodes.GamemodeManager.OnGamemodeStopped += () =>
@@ -681,6 +702,11 @@ namespace LabPresence.Plugins.Default
             Gamemodes.RegisterGamemode("Lakatrazz.Deathmatch", DeathmatchTooltip);
             Gamemodes.RegisterGamemode("Lakatrazz.Team Deathmatch", TeamDeathmatchTooltip);
             Gamemodes.RegisterGamemode("Lakatrazz.Entangled", EntangledTooltip);
+        }
+
+        private static void OnLobby()
+        {
+            SetTimestamp();
         }
 
         private static string HideAndSeekTooltip()
@@ -759,10 +785,14 @@ namespace LabPresence.Plugins.Default
             }
         }
 
-        private static void SetTimestamp()
+        public static void SetTimestamp(bool setLobbyLaunch = true)
         {
-            if (FusionPlugin.Instance.GetConfig().OverwriteTimeToLobby && Core.Config.TimeMode == TimeMode.Level)
-                RichPresenceManager.SetTimestampStartToNow();
+            if (setLobbyLaunch)
+                LobbyLaunch = DateTimeOffset.Now;
+            if (FusionPlugin.Instance.GetConfig().OverrideTimeToLobby && Core.Config.TimeMode == TimeMode.Level)
+                RichPresenceManager.SetTimestamp((ulong)LobbyLaunch.ToUnixTimeMilliseconds(), null, true);
+            else
+                Core.ConfigureTimestamp(true);
         }
 
         /// <summary>
@@ -885,7 +915,7 @@ namespace LabPresence.Plugins.Default
 
         private static void Update()
         {
-            if (Core.Config.TimeMode == TimeMode.Level && FusionPlugin.Instance.GetConfig().OverwriteTimeToLobby && !IsConnected)
+            if (Core.Config.TimeMode == TimeMode.Level && FusionPlugin.Instance.GetConfig().OverrideTimeToLobby && !IsConnected)
                 RichPresenceManager.SetTimestampStartToNow();
 
             if (RichPresenceManager.CurrentConfig == FusionPlugin.Instance.GetConfig().LevelLoaded && !IsConnected)

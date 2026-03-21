@@ -17,16 +17,16 @@ namespace LabPresence.Config
         public LogLevel RPCLogLevel { get; set; } = LogLevel.Error;
 
         /// <summary>
-        /// What the RPC will display as time, available options: Level (since the current level was loaded), CurrentTime (the current time, example: 15:53:50) and GameSession (since the game was launched)
+        /// What the Rich Presence will display as time, available options: Level (since the current level was loaded), CurrentTime (the current time, example: 15:53:50) and GameSession (since the game was launched)
         /// </summary>
-        [TomlPrecedingComment("What the RPC will display as time, available options: Level (since the current level was loaded), CurrentTime (the current time, example: 15:53:50) and GameSession (since the game was launched)")]
+        [TomlPrecedingComment("What the Rich Presence will display as time, available options: Level (since the current level was loaded), CurrentTime (the current time, example: 15:53:50) and GameSession (since the game was launched)")]
         [TomlProperty("TimeMode")]
         public TimeMode TimeMode { get; set; } = TimeMode.GameSession;
 
         /// <summary>
-        /// If true, in for example '15 - Void G114' the '15 - ' will be removed and only 'Void G114' will be shown in the %levelName% placeholder
+        /// If true, in for example '15 - Void G114' the '15 - ' will be removed and only 'Void G114' will be shown in the 'levelName' placeholder
         /// </summary>
-        [TomlPrecedingComment("If true, in for example '15 - Void G114' the '15 - ' will be removed and only 'Void G114' will be shown in the %levelName% placeholder")]
+        [TomlPrecedingComment("If true, in for example '15 - Void G114' the '15 - ' will be removed and only 'Void G114' will be shown in the 'levelName' placeholder")]
         [TomlProperty("RemoveLevelNumbers")]
         public bool RemoveLevelNumbers { get; set; } = true;
 
@@ -46,7 +46,7 @@ namespace LabPresence.Config
         /// The config used when the a level is loaded
         /// </summary>
         [TomlProperty("LevelLoaded")]
-        public RPCConfig LevelLoaded { get; set; } = new("Level: {{ levelName }}", "Avatar: {{ avatar.title }}");
+        public RPCConfig LevelLoaded { get; set; } = new("Level: {{ levelName }}", "Avatar: {{ avatarName }}");
 
         /// <summary>
         /// The config used when the a level is loading

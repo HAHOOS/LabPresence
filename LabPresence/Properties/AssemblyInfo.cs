@@ -13,8 +13,8 @@ using MelonLoader;
 
 #region Info
 
-[assembly: AssemblyTitle("Adds Discord RPC to BONELAB")]
-[assembly: AssemblyDescription("Adds Discord RPC to BONELAB")]
+[assembly: AssemblyTitle("Adds Discord Rich Presence support to BONELAB")]
+[assembly: AssemblyDescription("Adds Discord Rich Presence support to BONELAB")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("HAHOOS")]
 [assembly: AssemblyProduct("LabPresence")]

@@ -17,7 +17,6 @@ using MelonLoader.Preferences;
 using System;
 using System.Linq;
 using System.IO;
-using System.Reflection;
 using System.Text.RegularExpressions;
 
 using LabPresence.Plugins;
@@ -26,7 +25,10 @@ using LabPresence.Plugins.Default;
 
 using BoneLib;
 using Scriban.Runtime;
+using LabPresence.Utilities;
 
+// This entire code deservers to just be fucking removed, I wish that I NEVER have to work with it ever again
+// This shit deserves to be coded from scratch
 namespace LabPresence
 {
     /// <summary>
@@ -51,6 +53,10 @@ namespace LabPresence
         internal static MelonPreferences_ReflectiveCategory Category { get; private set; }
 
         internal static Config.DefaultConfig Config => Category?.GetValue<LabPresence.Config.DefaultConfig>();
+
+        public static DateTimeOffset GameLaunch { get; private set; } = DateTimeOffset.Now;
+
+        public static DateTimeOffset LevelLaunch { get; private set; } = DateTimeOffset.Now;
 
         /// <summary>
         /// Runs when the melon gets initialized
@@ -122,8 +128,9 @@ namespace LabPresence
 
             LevelHooks.OnLevelLoaded += (_) =>
             {
+                LevelLaunch = DateTime.Now;
                 if (Config.TimeMode == LabPresence.Config.TimeMode.Level)
-                    RichPresenceManager.SetTimestampStartToNow();
+                    ConfigureTimestamp(false);
 
                 Overwrites.OnLevelLoaded.Run();
             };
@@ -133,12 +140,10 @@ namespace LabPresence
 
             AssetWarehouse.OnReady((Il2CppSystem.Action)Overwrites.OnAssetWarehouseLoaded.Run);
 
-            if (Config.TimeMode != LabPresence.Config.TimeMode.CurrentTime)
-                RichPresenceManager.SetTimestampStartToNow();
-            else
-                RichPresenceManager.SetTimestampToCurrentTime();
-
             Overwrites.OnPreGame.Run();
+
+            LoggerInstance.Msg("Creating BoneMenu");
+            MenuManager.Init();
 
             LoggerInstance.Msg("Initialized.");
         }
@@ -153,6 +158,16 @@ namespace LabPresence
             {
                 LoggerInstance.Error($"An unexpected error has occurred while registering URI scheme, exception:\n{ex}");
             }
+        }
+
+        public static void ConfigureTimestamp(bool autoUpdate = false)
+        {
+            if (Config.TimeMode == LabPresence.Config.TimeMode.CurrentTime)
+                RichPresenceManager.SetTimestampToCurrentTime(autoUpdate);
+            else if (Config.TimeMode == LabPresence.Config.TimeMode.GameSession)
+                RichPresenceManager.SetTimestamp((ulong)GameLaunch.ToUnixTimeMilliseconds(), null, autoUpdate);
+            else if (Config.TimeMode == LabPresence.Config.TimeMode.Level)
+                RichPresenceManager.SetTimestamp((ulong)LevelLaunch.ToUnixTimeMilliseconds(), null, autoUpdate);
         }
 
         private static SpawnableCrate GetInHand(Handedness handType)

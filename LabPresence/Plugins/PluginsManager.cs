@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using BoneLib.BoneMenu;
+
+using LabPresence.Managers;
+
 namespace LabPresence.Plugins
 {
     public static class PluginsManager
@@ -20,18 +24,33 @@ namespace LabPresence.Plugins
             Core.Logger.Msg($"Plugin '{instance.Name}' v{instance.Version} by {instance.Author} has been registered!");
             _Plugins.Add(instance);
             instance.Internal_Init();
+
+            if (MenuManager.IsInitialized)
+                instance.Internal_PopulateMenu();
         }
 
         public static void Register<PluginT>() where PluginT : IPlugin
             => Register(typeof(PluginT));
 
-        public static bool Unregister(string name)
-            => _Plugins.RemoveAll(x => x.Name == name) > 0;
+        public static void Unregister(string name)
+        {
+            var copy = new List<IPlugin>(_Plugins);
+            copy.ForEach(x =>
+            {
+                if (x.Name != name)
+                    return;
 
-        public static bool Unregister(Type plugin)
+                if (x.MenuPage != null)
+                    Menu.DestroyPage(x.MenuPage);
+
+                _Plugins.Remove(x);
+            });
+        }
+
+        public static void Unregister(Type plugin)
             => Unregister(GetPluginFromType(plugin).Name);
 
-        public static bool Unregister<PluginT>() where PluginT : IPlugin
+        public static void Unregister<PluginT>() where PluginT : IPlugin
            => Unregister(GetPluginFromType(typeof(PluginT)).Name);
 
         public static bool IsRegistered(string name) => Plugins.Any(x => x.Name == name);
