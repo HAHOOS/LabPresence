@@ -8,7 +8,6 @@
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>$(SolutionDir)\key.snk</AssemblyOriginatorKeyFile>
 		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 
 	</PropertyGroup>
 

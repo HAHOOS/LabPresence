@@ -277,25 +277,16 @@ namespace LabPresence.Plugins.Default
         }
     }
 
-    /// <summary>
-    /// Class that contains methods to interact with LabFusion
-    /// </summary>
     public static class Fusion
     {
         internal static DateTimeOffset LobbyLaunch { get; set; }
 
         private const string AllowKey = "LabPresence.AllowInvites";
 
-        /// <summary>
-        /// Is LabFusion installed
-        /// </summary>
         public static bool HasFusion => MelonBase.FindMelon("LabFusion", "Lakatrazz") != null;
 
         private static Logger Logger;
 
-        /// <summary>
-        /// Is the local player connected to a lobby
-        /// </summary>
         public static bool IsConnected
         {
             get
@@ -306,9 +297,6 @@ namespace LabPresence.Plugins.Default
             }
         }
 
-        /// <summary>
-        /// Is a gamemode started
-        /// </summary>
         public static bool IsGamemodeStarted
         {
             get
@@ -329,18 +317,12 @@ namespace LabPresence.Plugins.Default
             return LabFusion.Network.NetworkInfo.HasServer;
         }
 
-        /// <summary>
-        /// Get the name of the current lobby
-        /// </summary>
         public static string GetLobbyName()
         {
             if (!IsConnected) return "N/A";
             else return Internal_GetLobbyName();
         }
 
-        /// <summary>
-        /// Get the permission level of the local player
-        /// </summary>
         public static string GetPermissionLevel()
         {
             if (!IsConnected) return "N/A";
@@ -359,9 +341,6 @@ namespace LabPresence.Plugins.Default
             return string.IsNullOrWhiteSpace(lobbyName) ? $"{lobbyInfo.LobbyHostName}'s lobby" : lobbyName;
         }
 
-        /// <summary>
-        /// Get the host of the current lobby
-        /// </summary>
         public static string GetHost()
         {
             if (!IsConnected) return "N/A";
@@ -378,9 +357,6 @@ namespace LabPresence.Plugins.Default
             return string.IsNullOrWhiteSpace(host) ? "N/A" : host;
         }
 
-        /// <summary>
-        /// Get the player count of the current lobby
-        /// </summary>
         public static (int current, int max) GetPlayerCount()
         {
             if (!IsConnected) return (-1, -1);
@@ -399,9 +375,6 @@ namespace LabPresence.Plugins.Default
             return (current, max);
         }
 
-        /// <summary>
-        /// Get the privacy of the current lobby
-        /// </summary>
         public static ServerPrivacy GetPrivacy()
         {
             if (!IsConnected) return ServerPrivacy.Unknown;
@@ -418,9 +391,6 @@ namespace LabPresence.Plugins.Default
             return (ServerPrivacy)(int)current;
         }
 
-        /// <summary>
-        /// Get the ID of the current lobby
-        /// </summary>
         public static ulong GetLobbyID()
         {
             if (!IsConnected) return 0;
@@ -436,9 +406,6 @@ namespace LabPresence.Plugins.Default
             return lobbyInfo.LobbyID;
         }
 
-        /// <summary>
-        /// Get the code of the current lobby
-        /// </summary>
         public static string GetLobbyCode()
         {
             if (!IsConnected) return string.Empty;
@@ -454,9 +421,6 @@ namespace LabPresence.Plugins.Default
             return lobbyInfo.LobbyCode;
         }
 
-        /// <summary>
-        /// Get the name of the current network layer
-        /// </summary>
         public static string GetCurrentNetworkLayerTitle()
         {
             if (!IsConnected) return null;
@@ -468,9 +432,6 @@ namespace LabPresence.Plugins.Default
             return LabFusion.Network.NetworkLayerManager.Layer?.Title;
         }
 
-        /// <summary>
-        /// Ensure that the metadata is up-to-date
-        /// </summary>
         public static void EnsureMetaDataSync()
         {
             if (IsConnected) Internal_EnsureMetadataSync();
@@ -484,9 +445,6 @@ namespace LabPresence.Plugins.Default
                 LabFusion.Player.LocalPlayer.Metadata.Metadata.TrySetMetadata(AllowKey, FusionPlugin.Instance.GetConfig().AllowPlayersToInvite.ToString());
         }
 
-        /// <summary>
-        /// Check if the host allows for people to invite
-        /// </summary>
         public static bool IsAllowedToInvite()
         {
             if (!IsConnected)
@@ -518,11 +476,6 @@ namespace LabPresence.Plugins.Default
             return host.PlayerID?.Metadata?.Metadata?.GetMetadata(AllowKey) == bool.TrueString;
         }
 
-        /// <summary>
-        /// Ensure you are on the right network layer
-        /// </summary>
-        /// <param name="title">The name of the network layer</param>
-        /// <returns>Was the network layer switched successfully</returns>
         public static bool EnsureNetworkLayer(string title)
         {
             if (!HasFusion)
@@ -558,10 +511,6 @@ namespace LabPresence.Plugins.Default
             return true;
         }
 
-        /// <summary>
-        /// Join a lobby by a code
-        /// </summary>
-        /// <param name="code">The code to use to join a lobby</param>
         public static void JoinByCode(string code)
         {
             if (HasFusion && !string.IsNullOrWhiteSpace(code))
@@ -795,9 +744,6 @@ namespace LabPresence.Plugins.Default
                 Core.ConfigureTimestamp(true);
         }
 
-        /// <summary>
-        /// Get the override time of the current gamemode
-        /// </summary>
         public static Timestamp GetGamemodeOverrideTime()
         {
             if (!IsConnected) return null;
@@ -821,9 +767,6 @@ namespace LabPresence.Plugins.Default
             return registered.GetOverrideTime();
         }
 
-        /// <summary>
-        /// Get the minimum delay RPC refresh for the current gamemode
-        /// </summary>
         public static float GetGamemodeMinimumDelay()
         {
             if (!IsConnected) return 0;
@@ -850,9 +793,6 @@ namespace LabPresence.Plugins.Default
                 return registered.MinimumDelay;
         }
 
-        /// <summary>
-        /// Get the small icon config for the current gamemode
-        /// </summary>
         public static (string key, string tooltip) GetGamemodeRPC()
         {
             if (!IsConnected) return (null, null);
@@ -879,10 +819,6 @@ namespace LabPresence.Plugins.Default
 
         private static JsonDocument KnownGamemodesCache;
 
-        /// <summary>
-        /// Get the small icon key for a gamemode
-        /// </summary>
-        /// <param name="barcode">Barcode of the gamemode</param>
         public static string GetGamemodeKey(string barcode)
         {
             try
@@ -924,34 +860,16 @@ namespace LabPresence.Plugins.Default
                 Overwrites.OnLevelLoading.Run();
         }
 
-        /// <summary>
-        /// The privacy of a lobby
-        /// </summary>
         public enum ServerPrivacy
         {
-            /// <summary>
-            /// Unknown privacy
-            /// </summary>
             Unknown = -1,
 
-            /// <summary>
-            /// Lobby is public
-            /// </summary>
             Public = 0,
 
-            /// <summary>
-            /// Lobby is private, you can join only with a code
-            /// </summary>
             Private = 1,
 
-            /// <summary>
-            /// Lobby is friends only, only friends of the host can join
-            /// </summary>
             Friends_Only = 2,
 
-            /// <summary>
-            /// Lobby is locked, no one can join
-            /// </summary>
             Locked = 3,
         }
     }

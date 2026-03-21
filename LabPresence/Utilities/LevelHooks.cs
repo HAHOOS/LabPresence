@@ -6,29 +6,14 @@ using Il2CppSLZ.Marrow.Warehouse;
 
 namespace LabPresence.Utilities
 {
-    /// <summary>
-    /// Class that contains events for level load, unload, loading
-    /// </summary>
     public static class LevelHooks
     {
-        /// <summary>
-        /// The current level
-        /// </summary>
         public static LevelCrate CurrentLevel => SceneStreamer.Session?.Level ?? null;
 
-        /// <summary>
-        /// Triggered when a level gets loaded
-        /// </summary>
         public static Action<LevelCrate> OnLevelLoaded { get; set; }
 
-        /// <summary>
-        /// Triggered when a level is loading
-        /// </summary>
         public static Action<LevelCrate> OnLevelLoading { get; set; }
 
-        /// <summary>
-        /// Triggered when a level gets unloaded
-        /// </summary>
         public static Action<LevelCrate> OnLevelUnloaded { get; set; }
 
         internal static LastStatus lastStatus;
