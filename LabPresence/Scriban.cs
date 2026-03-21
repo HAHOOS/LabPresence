@@ -208,5 +208,8 @@ namespace LabPresence
             }
             return null;
         }
+
+        public static string CleanString(string str)
+            => Core.RemoveUnityRichText(str);
     }
 }

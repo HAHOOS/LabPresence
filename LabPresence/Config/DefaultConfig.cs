@@ -10,6 +10,17 @@ namespace LabPresence.Config
     public class DefaultConfig()
     {
         /// <summary>
+        /// The current version of config, used when migrating from old version is needed
+        /// </summary>
+        public const int CurrentConfigVersion = 2;
+
+        /// <summary>
+        /// The version of config, used when migrating from old version is needed
+        /// </summary>
+        [TomlProperty("ConfigVersion")]
+        public int ConfigVersion { get; set; } = CurrentConfigVersion;
+
+        /// <summary>
         /// The logs of RPC that will be displayed, available: None, Trace, Info, Warning, Error
         /// </summary>
         [TomlPrecedingComment("The logs of RPC that will be displayed, available: None, Trace, Info, Warning, Error")]

@@ -83,14 +83,9 @@ namespace LabPresence.Plugins
 
                 bool result = overwrite.Callback?.Invoke(arg) == true;
                 if (!result)
-                {
                     ordered.RemoveAt(0);
-                    continue;
-                }
                 else
-                {
                     return;
-                }
             }
             Default?.Invoke(arg);
         }
@@ -178,14 +173,9 @@ namespace LabPresence.Plugins
 
                 bool result = overwrite.Callback?.Invoke() == true;
                 if (!result)
-                {
                     ordered.RemoveAt(0);
-                    continue;
-                }
                 else
-                {
                     return;
-                }
             }
             Default?.Invoke();
         }

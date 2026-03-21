@@ -18,7 +18,6 @@ using System;
 using System.Linq;
 using System.IO;
 using System.Reflection;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 using LabPresence.Plugins;
@@ -72,31 +71,6 @@ namespace LabPresence
             Category = MelonPreferences.CreateCategory<LabPresence.Config.DefaultConfig>("LabPresenceConfig", "Lab Presence Config");
             Category.SetFilePath(Path.Combine(dir.FullName, "default.cfg"), true, false);
             Category.SaveToFile(false);
-
-            try
-            {
-                LoggerInstance.Msg("Adding README.txt");
-                var assembly = Assembly.GetExecutingAssembly();
-                var name = assembly?.GetName()?.Name;
-                if (!string.IsNullOrWhiteSpace(name))
-                {
-                    const string path = "{0}.Embedded.README.txt";
-                    using var stream = assembly.GetManifestResourceStream(string.Format(path, name));
-                    using var reader = new StreamReader(stream);
-                    var text = reader.ReadToEnd();
-                    using var writer = File.CreateText(Path.Combine(dir.FullName, "README.txt"));
-                    writer.Write(text);
-                    writer.Flush();
-                }
-                else
-                {
-                    LoggerInstance.Warning("The assembly name could not be found! Cannot add README.txt");
-                }
-            }
-            catch (Exception ex)
-            {
-                LoggerInstance.Error($"An unexpected error has occurred while creating README.txt, exception:\n{ex}");
-            }
 
             LoggerInstance.Msg("Adding placeholders");
 
@@ -169,23 +143,6 @@ namespace LabPresence
             LoggerInstance.Msg("Initialized.");
         }
 
-        /// <summary>
-        /// Runs before the melon gets initialized
-        /// </summary>
-        public override void OnEarlyInitializeMelon()
-        {
-            base.OnEarlyInitializeMelon();
-
-            Load();
-        }
-
-        internal static void Load()
-        {
-            DependencyManager.TryLoadDependency("DiscordRPC", true, false);
-            DependencyManager.TryLoadDependency("Scriban.Signed", true, false);
-            DependenciesLoaded = true;
-        }
-
         private void RegisterURIScheme()
         {
             try
@@ -201,7 +158,7 @@ namespace LabPresence
         private static SpawnableCrate GetInHand(Handedness handType)
         {
             var hand = handType == Handedness.LEFT ? Player.LeftHand : Player.RightHand;
-            return hand.AttachedReceiver?.Host?.GetGrip()?._marrowEntity?._poolee?.SpawnableCrate;
+            return hand?.AttachedReceiver?.Host?.GetGrip()?._marrowEntity?._poolee?.SpawnableCrate;
         }
 
         private static void AddDefaultPlaceholders()
@@ -214,7 +171,7 @@ namespace LabPresence
 
                 var scriptObject = new ScriptObject
                 {
-                    { "level", new ScribanCrate(SceneStreamer.Session?.Level)  },
+                    { "level", SceneStreamer.Session?.Level != null ? new ScribanCrate(SceneStreamer.Session?.Level) : null  },
                     { "levelName", CleanLevelName() },
                     { "platform", MelonUtils.CurrentPlatform == MelonPlatformAttribute.CompatiblePlatforms.ANDROID ? "Quest" : "PCVR" },
                     { "mlVersion", AppDomain.CurrentDomain?.GetAssemblies()?.FirstOrDefault(x => x.GetName().Name == "MelonLoader")?.GetName()?.Version?.ToString() ?? "N/A" },
@@ -223,10 +180,10 @@ namespace LabPresence
                     { "healthPercentage", MathF.Floor(((Player.RigManager?.health?.curr_Health ?? 0) / (Player.RigManager?.health?.max_Health ?? 0)) * 100) },
                     { "fps", FPS.FramesPerSecond },
                     { "operatingSystem", SystemInfo.operatingSystem },
-                    { "avatar", new ScribanCrate(Player.RigManager?.AvatarCrate?.Crate) },
+                    { "avatar", Player.RigManager?.AvatarCrate?.Crate != null ? new ScribanCrate(Player.RigManager?.AvatarCrate?.Crate) : null },
                     { "avatarName", RemoveUnityRichText(Player.RigManager?.AvatarCrate?.Crate?.Title ?? "N/A")  },
-                    { "leftHand", new ScribanCrate(GetInHand(Handedness.LEFT))  },
-                    { "rightHand", new ScribanCrate(GetInHand(Handedness.RIGHT)) },
+                    { "leftHand", GetInHand(Handedness.LEFT) != null ? new ScribanCrate(GetInHand(Handedness.LEFT)) : null  },
+                    { "rightHand", GetInHand(Handedness.RIGHT) != null ? new ScribanCrate(GetInHand(Handedness.RIGHT)) : null },
                     { "codeModsCount", RegisteredMelons.Count },
                     { "modsCount", modsCount },
                     { "ammoLight", AmmoInventory.Instance?._groupCounts["light"] ?? 0 },
@@ -274,7 +231,6 @@ namespace LabPresence
             => Regex.Replace(levelName, "[0-9][0-9] - ", string.Empty);
 
         private static string lastState, lastDetails;
-        public static bool DependenciesLoaded { get; private set; }
 
         private static int lastDay = -1;
 
@@ -284,9 +240,6 @@ namespace LabPresence
         public override void OnUpdate()
         {
             base.OnUpdate();
-
-            if (!DependenciesLoaded)
-                return;
 
             Internal_OnUpdate();
         }

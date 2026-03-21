@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
-
-using LabPresence.Config;
 
 using Scriban;
 using Scriban.Runtime;
@@ -121,6 +118,10 @@ namespace LabPresence.Managers
 
             var content = new TemplateContext();
 
+            var defaultObject = new ScriptObject();
+            defaultObject.Import(typeof(ScribanHelper));
+            content.PushGlobal(defaultObject);
+
             foreach (var placeholder in _Placeholders)
             {
                 try
@@ -140,27 +141,21 @@ namespace LabPresence.Managers
     /// <summary>
     /// A placeholder to be used in <see cref="PlaceholderManager"/>
     /// </summary>
-    public class Placeholder
+    /// <remarks>
+    /// Initializes a new instance of a <see cref="Placeholder"/>
+    /// </remarks>
+    /// <param name="id"><inheritdoc cref="ID"/></param>
+    /// <param name="values"><inheritdoc cref="Values"/></param>
+    public class Placeholder(string id, Func<ScriptObject> values)
     {
         /// <summary>
         /// ID of the placeholder
         /// </summary>
-        public string ID { get; set; }
+        public string ID { get; set; } = id;
 
         /// <summary>
         /// Function which returns a <seealso cref="ScriptObject"/>, containing all of the placeholders
         /// </summary>
-        public Func<ScriptObject> Values { get; set; }
-
-        /// <summary>
-        /// Initializes a new instance of a <see cref="Placeholder"/>
-        /// </summary>
-        /// <param name="id"><inheritdoc cref="ID"/></param>
-        /// <param name="values"><inheritdoc cref="Values"/></param>
-        public Placeholder(string id, Func<ScriptObject> values)
-        {
-            ID = ID;
-            Values = values;
-        }
+        public Func<ScriptObject> Values { get; set; } = values;
     }
 }
