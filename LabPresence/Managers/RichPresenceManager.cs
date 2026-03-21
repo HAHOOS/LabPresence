@@ -8,7 +8,7 @@ using DiscordRPC.Exceptions;
 using DiscordRPC.Helper;
 
 using LabPresence.Config;
-using LabPresence.Helper;
+using LabPresence.Utilities;
 
 using UnityEngine;
 

@@ -4,7 +4,7 @@ using Il2CppSLZ.Marrow.SceneStreaming;
 using Il2CppSLZ.Marrow.Utilities;
 using Il2CppSLZ.Marrow.Warehouse;
 
-namespace LabPresence.Helper
+namespace LabPresence.Utilities
 {
     /// <summary>
     /// Class that contains events for level load, unload, loading

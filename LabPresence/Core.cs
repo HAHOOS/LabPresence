@@ -2,8 +2,6 @@
 
 using DiscordRPC;
 
-using LabPresence.Helper;
-
 using UnityEngine;
 
 using Il2CppSLZ.Marrow;
@@ -54,7 +52,7 @@ namespace LabPresence
 
         internal static Config.DefaultConfig Config => Category?.GetValue<LabPresence.Config.DefaultConfig>();
 
-        public static DateTimeOffset GameLaunch { get; private set; } = DateTimeOffset.Now;
+        public static DateTimeOffset GameLaunch { get; } = DateTimeOffset.Now;
 
         public static DateTimeOffset LevelLaunch { get; private set; } = DateTimeOffset.Now;
 

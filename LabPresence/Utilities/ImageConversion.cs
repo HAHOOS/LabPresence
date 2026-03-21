@@ -5,7 +5,7 @@ using Il2CppInterop.Runtime;
 
 using UnityEngine;
 
-namespace LabPresence.Helper
+namespace LabPresence.Utilities
 {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 

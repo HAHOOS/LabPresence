@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LabPresence.Helper
+namespace LabPresence.Utilities
 {
     /// <summary>
     /// Class responsible for checking the Frames Per Second of the game
