@@ -3,13 +3,13 @@
 
 **The mod does not work on Quest, because Discord does not support RPC on Android**
 
-This mod adds the support for Discord Rich Presence.
+This mod adds the support for Discord Rich Presence, while also allowing for customization of what should be displayed!
 
 <h2 align="center">Features</h2>
 
+* **Full LabFusion Support, including Discord invites & more!**
 * Full customizability of what's displayed.
-* Full support for LabFusion, including joining and more.
-* Placeholders for further customization (the list can be found in UserData > LabPresence > README.txt that's generated when the mod gets initialized).
+* Placeholders for powered by a powerful templating engine [Scriban](https://scriban.github.io/)
 
 <h2 align="center">Credits</h2>
 
