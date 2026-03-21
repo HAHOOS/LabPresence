@@ -1,31 +1,30 @@
 ﻿using System;
+using System.IO;
+using System.Reflection;
 
-using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Il2CppInterop.Runtime;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
 
 using UnityEngine;
 
 namespace LabPresence.Utilities
 {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-
     public static class ImageConversion
     {
-        static ImageConversion()
-        {
-            EncodeToTGADelegateField = IL2CPP.ResolveICall<TextureOnlyDelegate>("UnityEngine.ImageConversion::EncodeToTGA");
-            EncodeToEXRDelegateField = IL2CPP.ResolveICall<TextureAndFlagDelegate>("UnityEngine.ImageConversion::EncodeToEXR");
-            EncodeToPNGDelegateField = IL2CPP.ResolveICall<TextureOnlyDelegate>("UnityEngine.ImageConversion::EncodeToPNG");
-            EncodeToJPGDelegateField = IL2CPP.ResolveICall<TextureAndQualityDelegate>("UnityEngine.ImageConversion::EncodeToJPG");
-            LoadImageDelegateField = IL2CPP.ResolveICall<LoadImageDelegate>("UnityEngine.ImageConversion::LoadImage");
-        }
+        private const string NullTextureError = "The texture cannot be null.";
+
+        private readonly static TextureAndFlagDelegate EncodeToEXRDelegateField = IL2CPP.ResolveICall<TextureAndFlagDelegate>("UnityEngine.ImageConversion::EncodeToEXR");
+        private readonly static TextureOnlyDelegate EncodeToTGADelegateField = IL2CPP.ResolveICall<TextureOnlyDelegate>("UnityEngine.ImageConversion::EncodeToTGA");
+        private readonly static TextureOnlyDelegate EncodeToPNGDelegateField = IL2CPP.ResolveICall<TextureOnlyDelegate>("UnityEngine.ImageConversion::EncodeToPNG");
+        private readonly static TextureAndQualityDelegate EncodeToJPGDelegateField = IL2CPP.ResolveICall<TextureAndQualityDelegate>("UnityEngine.ImageConversion::EncodeToJPG");
+        private readonly static LoadImageDelegate LoadImageDelegateField = IL2CPP.ResolveICall<LoadImageDelegate>("UnityEngine.ImageConversion::LoadImage");
 
         public static Il2CppStructArray<byte> EncodeToTGA(this Texture2D tex)
         {
             if (tex == null)
-                throw new ArgumentException("The texture cannot be null.");
+                throw new ArgumentNullException(nameof(tex), NullTextureError);
             if (EncodeToTGADelegateField == null)
-                throw new NullReferenceException("The EncodeToTGADelegateField cannot be null.");
+                throw new InvalidOperationException("The EncodeToTGADelegateField cannot be null.");
             Il2CppStructArray<byte> il2CppStructArray;
             IntPtr encodeToTGADelegateField = EncodeToTGADelegateField(IL2CPP.Il2CppObjectBaseToPtr(tex));
             if (encodeToTGADelegateField != IntPtr.Zero)
@@ -38,9 +37,9 @@ namespace LabPresence.Utilities
         public static Il2CppStructArray<byte> EncodeToPNG(this Texture2D tex)
         {
             if (tex == null)
-                throw new ArgumentException("The texture cannot be null.");
+                throw new ArgumentNullException(nameof(tex), NullTextureError);
             if (EncodeToPNGDelegateField == null)
-                throw new NullReferenceException("The EncodeToPNGDelegateField cannot be null.");
+                throw new InvalidOperationException("The EncodeToPNGDelegateField cannot be null.");
             Il2CppStructArray<byte> il2CppStructArray;
             IntPtr encodeToPNGDelegateField = EncodeToPNGDelegateField(IL2CPP.Il2CppObjectBaseToPtr(tex));
             if (encodeToPNGDelegateField != IntPtr.Zero)
@@ -53,9 +52,9 @@ namespace LabPresence.Utilities
         public static Il2CppStructArray<byte> EncodeToJPG(this Texture2D tex, int quality)
         {
             if (tex == null)
-                throw new ArgumentException("The texture cannot be null.");
+                throw new ArgumentNullException(nameof(tex), NullTextureError);
             if (EncodeToJPGDelegateField == null)
-                throw new NullReferenceException("The EncodeToJPGDelegateField cannot be null.");
+                throw new InvalidOperationException("The EncodeToJPGDelegateField cannot be null.");
             Il2CppStructArray<byte> il2CppStructArray;
             IntPtr encodeToJPGDelegateField = EncodeToJPGDelegateField(IL2CPP.Il2CppObjectBaseToPtr(tex), quality);
             if (encodeToJPGDelegateField != IntPtr.Zero)
@@ -65,14 +64,14 @@ namespace LabPresence.Utilities
             return il2CppStructArray;
         }
 
-        public static Il2CppStructArray<byte> EncodeToJPG(this Texture2D tex) => tex.EncodeToJPG(75);
+        public static Il2CppStructArray<byte> EncodeToJPG(this Texture2D tex) => EncodeToJPG(tex, 75);
 
         public static Il2CppStructArray<byte> EncodeToEXR(this Texture2D tex, Texture2D.EXRFlags flags)
         {
             if (tex == null)
-                throw new ArgumentException("The texture cannot be null.");
+                throw new ArgumentNullException(nameof(tex), NullTextureError);
             if (EncodeToEXRDelegateField == null)
-                throw new NullReferenceException("The EncodeToEXRDelegateField cannot be null.");
+                throw new InvalidOperationException("The EncodeToEXRDelegateField cannot be null.");
             Il2CppStructArray<byte> il2CppStructArray;
             IntPtr encodeToEXRDelegateField = EncodeToEXRDelegateField(IL2CPP.Il2CppObjectBaseToPtr(tex), flags);
             if (encodeToEXRDelegateField != IntPtr.Zero)
@@ -82,20 +81,29 @@ namespace LabPresence.Utilities
             return il2CppStructArray;
         }
 
-        public static Il2CppStructArray<byte> EncodeToEXR(this Texture2D tex) => tex.EncodeToEXR(0);
+        public static Il2CppStructArray<byte> EncodeToEXR(this Texture2D tex) => EncodeToEXR(tex, 0);
 
         public static bool LoadImage(this Texture2D tex, Il2CppStructArray<byte> data, bool markNonReadable)
         {
             if (tex == null)
-                throw new ArgumentException("The texture cannot be null.");
+                throw new ArgumentNullException(nameof(tex), NullTextureError);
             if (data == null)
-                throw new ArgumentException("The data cannot be null.");
+                throw new ArgumentNullException(nameof(data), "The data cannot be null.");
             if (LoadImageDelegateField == null)
-                throw new NullReferenceException("The LoadImageDelegateField cannot be null.");
+                throw new InvalidOperationException("The LoadImageDelegateField cannot be null.");
             return LoadImageDelegateField(IL2CPP.Il2CppObjectBaseToPtr(tex), IL2CPP.Il2CppObjectBaseToPtr(data), markNonReadable);
         }
 
-        public static bool LoadImage(this Texture2D tex, Il2CppStructArray<byte> data) => tex.LoadImage(data, false);
+        public static bool LoadImage(this Texture2D tex, Il2CppStructArray<byte> data) => LoadImage(tex, data, false);
+
+        public static Texture2D LoadTexture(string name, byte[] bytes)
+        {
+            var texture2d = new Texture2D(2, 2);
+            texture2d.LoadImage(bytes, false);
+            texture2d.name = name;
+            texture2d.hideFlags = HideFlags.DontUnloadUnusedAsset;
+            return texture2d;
+        }
 
         private delegate IntPtr TextureOnlyDelegate(IntPtr tex);
 
@@ -104,13 +112,5 @@ namespace LabPresence.Utilities
         private delegate IntPtr TextureAndFlagDelegate(IntPtr tex, Texture2D.EXRFlags flags);
 
         private delegate bool LoadImageDelegate(IntPtr tex, IntPtr data, bool markNonReadable);
-
-        private readonly static TextureAndFlagDelegate EncodeToEXRDelegateField;
-        private readonly static TextureOnlyDelegate EncodeToTGADelegateField;
-        private readonly static TextureOnlyDelegate EncodeToPNGDelegateField;
-        private readonly static TextureAndQualityDelegate EncodeToJPGDelegateField;
-        private readonly static LoadImageDelegate LoadImageDelegateField;
     }
 }
-
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member

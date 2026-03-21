@@ -18,7 +18,7 @@ namespace LabPresence.Managers
     {
         private static Presence CurrentPresence { get; set; }
 
-        public static RPCConfig CurrentConfig { get; private set; }
+        public static RpcConfig CurrentConfig { get; private set; }
 
         public static Timestamp Timestamp { get; private set; }
 
@@ -111,13 +111,17 @@ namespace LabPresence.Managers
             largeImage ??= new("icon", "BONELAB");
             if (!ValidateString(Core.RemoveUnityRichText(details?.ApplyPlaceholders()), out string det, false, 128, Encoding.UTF8) ||
                 !ValidateString(Core.RemoveUnityRichText(state?.ApplyPlaceholders()), out string stat, false, 128, Encoding.UTF8) ||
-                !ValidateString(Core.RemoveUnityRichText(largeImage?.ToolTip?.ApplyPlaceholders()), out _, false, 128, Encoding.UTF8) ||
-                !ValidateString(Core.RemoveUnityRichText(smallImage?.ToolTip?.ApplyPlaceholders()), out _, false, 128, Encoding.UTF8))
+                !ValidateString(Core.RemoveUnityRichText(largeImage?.ToolTip?.ApplyPlaceholders()), out string large, false, 128, Encoding.UTF8) ||
+                !ValidateString(Core.RemoveUnityRichText(smallImage?.ToolTip?.ApplyPlaceholders()), out string small, false, 128, Encoding.UTF8))
             {
                 throw new ArgumentException(
                     message: "State, Details and/or an asset tooltip is/are over 128 bytes which Rich Presence cannot handle, try to lower the amount of characters"
                 );
             }
+
+            largeImage?.ToolTip = large;
+            smallImage?.ToolTip = small;
+
             Core.Client.SetPresence(new DiscordRPC.RichPresence()
             {
                 Details = det,
@@ -163,7 +167,7 @@ namespace LabPresence.Managers
             return false;
         }
 
-        public static bool TrySetRichPresence(RPCConfig config, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, Asset largeImage = null, Asset smallImage = null)
+        public static bool TrySetRichPresence(RpcConfig config, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, Asset largeImage = null, Asset smallImage = null)
         {
             if (!config.Use)
                 return true;
@@ -177,7 +181,7 @@ namespace LabPresence.Managers
             return res;
         }
 
-        public static void SetRichPresence(RPCConfig config, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, Asset largeImage = null, Asset smallImage = null)
+        public static void SetRichPresence(RpcConfig config, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, Asset largeImage = null, Asset smallImage = null)
         {
             if (!config.Use)
                 return;
@@ -205,12 +209,7 @@ namespace LabPresence.Managers
             {
                 var bytesTask = task.Result.Content.ReadAsByteArrayAsync();
                 if (bytesTask.IsCompletedSuccessfully)
-                {
-                    texture = new Texture2D(2, 2);
-                    texture.LoadImage(bytesTask.Result, false);
-                    texture.name = $"{user.DisplayName} ({user.Username})";
-                    texture.hideFlags = HideFlags.DontUnloadUnusedAsset;
-                }
+                    texture = ImageConversion.LoadTexture($"{user.DisplayName} (@{user.Username})", bytesTask.Result);
             }
 
             if (cache && texture != null)
@@ -240,9 +239,9 @@ namespace LabPresence.Managers
         }
     }
 
-    public class Presence(RPCConfig config, ActivityType type, Party party, Secrets secrets, Asset largeImage, Asset smallImage)
+    public class Presence(RpcConfig config, ActivityType type, Party party, Secrets secrets, Asset largeImage, Asset smallImage)
     {
-        public RPCConfig Config { get; internal set; } = config;
+        public RpcConfig Config { get; internal set; } = config;
 
         public ActivityType Type { get; internal set; } = type;
 

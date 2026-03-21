@@ -25,9 +25,9 @@ namespace LabPresence.Config
         public bool Joins { get; set; } = true;
 
         [TomlProperty("LevelLoaded")]
-        public RPCConfig LevelLoaded { get; set; } = new("{{ levelName }}", "{{ fusion_lobbyName }}");
+        public RpcConfig LevelLoaded { get; set; } = new("{{ levelName }}", "{{ fusion_lobbyName }}");
 
         [TomlProperty("LevelLoading")]
-        public RPCConfig LevelLoading { get; set; } = new("Loading {{ levelName }}", "{{ fusion_lobbyName }}");
+        public RpcConfig LevelLoading { get; set; } = new("Loading {{ levelName }}", "{{ fusion_lobbyName }}");
     }
 }

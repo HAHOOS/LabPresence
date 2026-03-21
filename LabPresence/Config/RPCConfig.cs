@@ -2,7 +2,7 @@
 
 namespace LabPresence.Config
 {
-    public class RPCConfig
+    public class RpcConfig
     {
         [TomlProperty("Use")]
         public bool Use { get; set; } = true;
@@ -13,22 +13,22 @@ namespace LabPresence.Config
         [TomlProperty("State")]
         public string State { get; set; }
 
-        public RPCConfig()
+        public RpcConfig()
         {
         }
 
-        public RPCConfig(bool use)
+        public RpcConfig(bool use)
         {
             Use = use;
         }
 
-        public RPCConfig(string details)
+        public RpcConfig(string details)
         {
             Details = details;
             Use = true;
         }
 
-        public RPCConfig(string details, string state)
+        public RpcConfig(string details, string state)
         {
             Details = details;
             State = state;

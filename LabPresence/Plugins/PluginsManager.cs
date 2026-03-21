@@ -19,7 +19,7 @@ namespace LabPresence.Plugins
             IPlugin instance = GetPluginFromType(plugin);
 
             if (IsRegistered(plugin))
-                throw new Exception("A plugin with the same name is already registered!");
+                throw new ArgumentException("A plugin with the same name is already registered!");
 
             Core.Logger.Msg($"Plugin '{instance.Name}' v{instance.Version} by {instance.Author} has been registered!");
             _Plugins.Add(instance);

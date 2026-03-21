@@ -38,7 +38,7 @@ namespace LabPresence.Plugins
         public void RegisterOverwrite(Overwrite<T> overwrite)
         {
             if (IsRegistered(overwrite))
-                throw new Exception("An overwrite with the same ID is already registered!");
+                throw new ArgumentException("An overwrite with the same ID is already registered!");
 
             _Overwrites.Add(overwrite);
         }
@@ -128,7 +128,7 @@ namespace LabPresence.Plugins
         public void RegisterOverwrite(Overwrite overwrite)
         {
             if (IsRegistered(overwrite))
-                throw new Exception("An overwrite with the same ID is already registered!");
+                throw new ArgumentException("An overwrite with the same ID is already registered!");
 
             _Overwrites.Add(overwrite);
         }

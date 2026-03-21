@@ -16,9 +16,8 @@ namespace LabPresence.Utilities
 
         public static Action<LevelCrate> OnLevelUnloaded { get; set; }
 
-        internal static LastStatus lastStatus;
+        internal static LastStatus LastStatus { get; private set; }
 
-        // TODO: Improve to not check every frame for changes
         internal static void OnUpdate()
         {
             if (!MarrowGame.IsInitialized)
@@ -30,7 +29,7 @@ namespace LabPresence.Utilities
             if (SceneStreamer.Session.Level == null)
                 return;
 
-            if (lastStatus?.UpToDate(SceneStreamer.Session.Level, SceneStreamer.Session.Status) != true)
+            if (LastStatus?.UpToDate(SceneStreamer.Session.Level, SceneStreamer.Session.Status) != true)
             {
                 try
                 {
@@ -39,12 +38,12 @@ namespace LabPresence.Utilities
                     else if (SceneStreamer.Session.Status == StreamStatus.LOADING)
                         OnLevelLoading?.Invoke(SceneStreamer.Session.Level);
 
-                    if (SceneStreamer.Session.Status != StreamStatus.DONE && lastStatus?.Status == StreamStatus.DONE)
-                        OnLevelUnloaded?.Invoke(lastStatus?.Level);
+                    if (SceneStreamer.Session.Status != StreamStatus.DONE && LastStatus?.Status == StreamStatus.DONE)
+                        OnLevelUnloaded?.Invoke(LastStatus?.Level);
                 }
                 finally
                 {
-                    lastStatus = new(SceneStreamer.Session.Status, SceneStreamer.Session.Level);
+                    LastStatus = new(SceneStreamer.Session.Status, SceneStreamer.Session.Level);
                 }
             }
         }

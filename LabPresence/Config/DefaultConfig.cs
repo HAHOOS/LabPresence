@@ -19,16 +19,16 @@ namespace LabPresence.Config
         public bool RemoveLevelNumbers { get; set; } = true;
 
         [TomlProperty("PreGameStarted")]
-        public RPCConfig PreGameStarted { get; set; } = new("Game loading...", "{{ codeModsCount }} melons");
+        public RpcConfig PreGameStarted { get; set; } = new("Game loading...", "{{ codeModsCount }} melons");
 
         [TomlProperty("AssetWarehouseLoaded")]
-        public RPCConfig AssetWarehouseLoaded { get; set; } = new("Asset Warehouse loaded", "{{ modsCount }} mods");
+        public RpcConfig AssetWarehouseLoaded { get; set; } = new("Asset Warehouse loaded", "{{ modsCount }} mods");
 
         [TomlProperty("LevelLoaded")]
-        public RPCConfig LevelLoaded { get; set; } = new("Level: {{ levelName }}", "Avatar: {{ avatarName }}");
+        public RpcConfig LevelLoaded { get; set; } = new("Level: {{ levelName }}", "Avatar: {{ avatarName }}");
 
         [TomlProperty("LevelLoading")]
-        public RPCConfig LevelLoading { get; set; } = new("Loading {{ levelName }}");
+        public RpcConfig LevelLoading { get; set; } = new("Loading {{ levelName }}");
     }
 
     public enum TimeMode

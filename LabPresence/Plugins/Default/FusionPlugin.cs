@@ -13,6 +13,8 @@ using DiscordRPC.Message;
 
 using Il2CppSLZ.Marrow.SceneStreaming;
 
+using LabFusion.SDK.Gamemodes;
+
 using LabPresence.Config;
 using LabPresence.Managers;
 
@@ -646,16 +648,40 @@ namespace LabPresence.Plugins.Default
                     RichPresenceManager.ResetOverrideTimestamp(true);
             };
 
-            // TODO: Add Smash Bones & Juggernaut
             Gamemodes.RegisterGamemode("Lakatrazz.Hide And Seek", HideAndSeekTooltip);
             Gamemodes.RegisterGamemode("Lakatrazz.Deathmatch", DeathmatchTooltip);
             Gamemodes.RegisterGamemode("Lakatrazz.Team Deathmatch", TeamDeathmatchTooltip);
             Gamemodes.RegisterGamemode("Lakatrazz.Entangled", EntangledTooltip);
+            Gamemodes.RegisterGamemode("Lakatrazz.Smash Bones", SmashBonesTooltip);
+            Gamemodes.RegisterGamemode("Lakatrazz.Juggernaut", JuggernautTooltip);
         }
 
         private static void OnLobby()
         {
             SetTimestamp();
+        }
+
+        private static string JuggernautTooltip()
+        {
+            if (LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode?.Barcode != "Lakatrazz.Juggernaut")
+                return string.Empty;
+
+            var gamemode = (LabFusion.SDK.Gamemodes.Juggernaut)LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
+            var team = gamemode.TeamManager.GetLocalTeam();
+            var id = LabFusion.Player.PlayerIDManager.LocalID;
+
+            return $"{team?.DisplayName ?? "N/A"} | #{gamemode.JuggernautScoreKeeper.GetPlace(id)} place with {gamemode.JuggernautScoreKeeper.GetScore(id)} points!";
+        }
+
+        private static string SmashBonesTooltip()
+        {
+            if (LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode?.Barcode != "Lakatrazz.Smash Bones")
+                return string.Empty;
+
+            var gamemode = (LabFusion.SDK.Gamemodes.SmashBones)LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
+            var id = LabFusion.Player.PlayerIDManager.LocalID;
+
+            return $"#{gamemode.PlayerScoreKeeper.GetPlace(id)} place with {gamemode.PlayerScoreKeeper.GetScore(id)} points! | {gamemode.PlayerStocksKeeper.GetScore(id)} stocks left";
         }
 
         private static string HideAndSeekTooltip()
@@ -676,11 +702,7 @@ namespace LabPresence.Plugins.Default
             var gamemode = (LabFusion.SDK.Gamemodes.Deathmatch)LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
             var id = LabFusion.Player.PlayerIDManager.LocalID;
 
-            List<LabFusion.Player.PlayerID> plrs = [.. LabFusion.Player.PlayerIDManager.PlayerIDs];
-            plrs = [.. plrs.OrderBy(x => gamemode.ScoreKeeper.GetScore(x))];
-            plrs.Reverse();
-
-            return $"#{plrs.FindIndex(x => x.IsMe) + 1} place with {gamemode.ScoreKeeper.GetScore(id)} points!";
+            return $"#{gamemode.ScoreKeeper.GetPlace(id)} place with {gamemode.ScoreKeeper.GetScore(id)} points!";
         }
 
         private static string TeamDeathmatchTooltip()

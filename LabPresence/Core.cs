@@ -193,7 +193,7 @@ namespace LabPresence
                     { "health", Player.RigManager?.health?.curr_Health ?? 0 },
                     { "maxHealth", Player.RigManager?.health?.max_Health ?? 0  },
                     { "healthPercentage", MathF.Floor(((Player.RigManager?.health?.curr_Health ?? 0) / (Player.RigManager?.health?.max_Health ?? 0)) * 100) },
-                    { "fps", FPS.FramesPerSecond },
+                    { "fps", Fps.FramesPerSecond },
                     { "operatingSystem", SystemInfo.operatingSystem },
                     { "avatar", Player.RigManager?.AvatarCrate?.Crate != null ? new ScribanCrate(Player.RigManager?.AvatarCrate?.Crate) : null },
                     { "avatarName", RemoveUnityRichText(Player.RigManager?.AvatarCrate?.Crate?.Title ?? "N/A")  },
@@ -252,7 +252,7 @@ namespace LabPresence
                 Client?.Invoke();
 
             RichPresenceManager.OnUpdate();
-            FPS.OnUpdate();
+            Fps.OnUpdate();
             LevelHooks.OnUpdate();
 
             _elapsedSecondsDateCheck += Time.deltaTime;
