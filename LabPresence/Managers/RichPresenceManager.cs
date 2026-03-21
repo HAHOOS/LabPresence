@@ -346,18 +346,45 @@ namespace LabPresence.Managers
         }
     }
 
+    /// <summary>
+    /// Contains all of the information about the configuration for Rich Presence.
+    /// </summary>
+    /// <param name="config"><inheritdoc cref="Config"/>></param>
+    /// <param name="type"><inheritdoc cref="Type"/>></param>
+    /// <param name="party"><inheritdoc cref="Party"/>></param>
+    /// <param name="secrets"><inheritdoc cref="Secrets"/>></param>
+    /// <param name="largeImage"><inheritdoc cref="LargeImage"/>></param>
+    /// <param name="smallImage"><inheritdoc cref="SmallImage"/>></param>
     public class Presence(RPCConfig config, ActivityType type, Party party, Secrets secrets, Asset largeImage, Asset smallImage)
     {
+        /// <summary>
+        /// <inheritdoc cref="RPCConfig"/>>
+        /// </summary>
         public RPCConfig Config { get; internal set; } = config;
 
+        /// <summary>
+        /// The type of activity, whether should it display "Playing" or "Watching" etc.
+        /// </summary>
         public ActivityType Type { get; internal set; } = type;
 
+        /// <summary>
+        /// The party of players, used to show the player count and the discord users in the same party on the Rich Presence.
+        /// </summary>
         public Party Party { get; internal set; } = party;
 
+        /// <summary>
+        /// Secrets used when joining a lobby through the Rich Presence.
+        /// </summary>
         public Secrets Secrets { get; internal set; } = secrets;
 
+        /// <summary>
+        /// The large image on the Rich Presence.
+        /// </summary>
         public Asset LargeImage { get; internal set; } = largeImage;
 
+        /// <summary>
+        /// The small image (bottom-right corner of the <see cref="LargeImage"/>) on the Rich Presence.
+        /// </summary>
         public Asset SmallImage { get; internal set; } = smallImage;
     }
 

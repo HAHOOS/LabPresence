@@ -19,7 +19,7 @@ namespace LabPresence
         /// <param name="gamemode">The gamemode to register</param>
         public static void RegisterGamemode(this Gamemode gamemode)
         {
-            ArgumentNullException.ThrowIfNull(gamemode, nameof(gamemode));
+            ArgumentNullException.ThrowIfNull(gamemode);
 
             if (_Gamemodes.Contains(gamemode))
                 throw new ArgumentException("Gamemode is already registered!");
