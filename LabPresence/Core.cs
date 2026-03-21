@@ -58,6 +58,10 @@ namespace LabPresence
 
         public static DateTimeOffset LevelLaunch { get; private set; } = DateTimeOffset.Now;
 
+        public static Thunderstore Thunderstore { get; private set; }
+
+        public static bool FirstLevelLoad { get; private set; } = true;
+
         /// <summary>
         /// Runs when the melon gets initialized
         /// </summary>
@@ -77,6 +81,10 @@ namespace LabPresence
             Category = MelonPreferences.CreateCategory<LabPresence.Config.DefaultConfig>("LabPresenceConfig", "Lab Presence Config");
             Category.SetFilePath(Path.Combine(dir.FullName, "default.cfg"), true, false);
             Category.SaveToFile(false);
+
+            LoggerInstance.Msg("Initializing Thunderstore");
+            Thunderstore = new Thunderstore($"LabPresence / {Version} A BONELAB Mod");
+            Thunderstore.BL_FetchPackage("LabPresence", "HAHOOS", Version, LoggerInstance);
 
             LoggerInstance.Msg("Adding placeholders");
 
@@ -128,6 +136,12 @@ namespace LabPresence
 
             LevelHooks.OnLevelLoaded += (_) =>
             {
+                if (!FirstLevelLoad)
+                {
+                    FirstLevelLoad = true;
+                    Thunderstore.BL_SendNotification();
+                }
+
                 LevelLaunch = DateTime.Now;
                 if (Config.TimeMode == LabPresence.Config.TimeMode.Level)
                     ConfigureTimestamp(false);

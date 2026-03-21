@@ -25,6 +25,7 @@ namespace LabPresence.Managers
         public static void Init()
         {
             ModPage = Page.Root.CreatePage("LabPresence", Color.cyan);
+            Core.Thunderstore.BL_CreateMenuLabel(ModPage, false);
             ConfigPage = ModPage.CreatePage("Config", FromRGB(255, 172, 28)); // Orange Color
             PopulateConfig();
 
