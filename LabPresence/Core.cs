@@ -39,7 +39,7 @@ namespace LabPresence
         /// <summary>
         /// Version of the mod
         /// </summary>
-        public const string Version = "1.2.0";
+        public const string Version = "1.3.0";
 
         /// <summary>
         /// The Discord RPC Client
@@ -60,7 +60,7 @@ namespace LabPresence
 
         public static Thunderstore Thunderstore { get; private set; }
 
-        public static bool FirstLevelLoad { get; private set; } = true;
+        public static bool FirstLevelLoad { get; private set; }
 
         /// <summary>
         /// Runs when the melon gets initialized
