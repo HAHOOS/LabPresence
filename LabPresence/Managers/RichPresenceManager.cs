@@ -24,6 +24,8 @@ namespace LabPresence.Managers
 
         public static TimestampOverride OverrideTimestamp { get; private set; }
 
+        public static bool AutoUpdate { get; set; } = true;
+
         public static void UpdateTimestamp()
         {
             if (Core.Client.CurrentPresence != null)
@@ -35,7 +37,7 @@ namespace LabPresence.Managers
 
         internal static void OnUpdate()
         {
-            if (CurrentPresence != null)
+            if (CurrentPresence != null && AutoUpdate)
             {
                 time += Time.deltaTime;
                 if (CurrentPresence != old)

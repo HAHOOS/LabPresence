@@ -254,6 +254,8 @@ namespace LabPresence.Plugins.Default
 
         private float ElapsedSeconds = 0;
 
+        private bool turnedOff = false;
+
         private void Update()
         {
             if (Category != null && GetConfig() != null)
@@ -266,8 +268,15 @@ namespace LabPresence.Plugins.Default
 
                 if (Fusion.IsConnected && SceneStreamer.Session?.Status == StreamStatus.DONE)
                 {
+                    RichPresenceManager.AutoUpdate = false;
+                    turnedOff = true;
                     var (key, tooltip) = Fusion.GetGamemodeRPC();
                     RichPresenceManager.TrySetRichPresence(RichPresenceManager.CurrentConfig, ActivityType.Playing, GetParty(), GetSecrets(), smallImage: new(key, tooltip));
+                }
+                else if (!RichPresenceManager.AutoUpdate && turnedOff)
+                {
+                    RichPresenceManager.AutoUpdate = true;
+                    turnedOff = false;
                 }
             }
         }
