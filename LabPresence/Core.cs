@@ -129,8 +129,7 @@ namespace LabPresence
                 }
 
                 LevelLaunch = DateTime.Now;
-                if (Config.TimeMode == LabPresence.Config.TimeMode.Level)
-                    ConfigureTimestamp(false);
+                ConfigureTimestamp(true);
 
                 Overwrites.OnLevelLoaded.Run();
             };
@@ -216,9 +215,7 @@ namespace LabPresence
         public static string RemoveBONELABLevelNumbers(string levelName)
             => Regex.Replace(levelName, "[0-9][0-9] - ", string.Empty);
 
-        private static string lastState, lastDetails;
-
-        private static int lastDay = -1;
+        private static int LastDay { get; set; } = -1;
 
         public override void OnUpdate()
         {
@@ -238,32 +235,20 @@ namespace LabPresence
 
             _elapsedSecondsDateCheck += Time.deltaTime;
 
-            if (lastDay == -1)
-            {
-                var time = DateTime.Now;
-                lastDay = time.Day;
-            }
+            if (LastDay == -1)
+                LastDay = DateTime.Now.Day;
 
-            if (RichPresenceManager.CurrentConfig != null)
+            if (RichPresenceManager.CurrentConfig != null && _elapsedSecondsDateCheck >= 5f)
             {
-                if (_elapsedSecondsDateCheck >= 2f)
+                _elapsedSecondsDateCheck = 0;
+                if (Config.TimeMode == LabPresence.Config.TimeMode.CurrentTime)
                 {
-                    _elapsedSecondsDateCheck = 0;
-                    if (Config.TimeMode == LabPresence.Config.TimeMode.CurrentTime)
+                    var now = DateTime.Now;
+                    if (now.Day != LastDay)
                     {
-                        var now = DateTime.Now;
-                        if (now.Day != lastDay)
-                        {
-                            lastDay = now.Day;
-                            RichPresenceManager.SetTimestampToCurrentTime(true);
-                        }
+                        LastDay = now.Day;
+                        RichPresenceManager.SetTimestampToCurrentTime(true);
                     }
-                }
-
-                if (lastDetails != RichPresenceManager.CurrentConfig.Details && lastState != RichPresenceManager.CurrentConfig.State)
-                {
-                    lastDetails = RichPresenceManager.CurrentConfig.Details;
-                    lastState = RichPresenceManager.CurrentConfig.State;
                 }
             }
         }

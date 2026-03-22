@@ -652,6 +652,9 @@ namespace LabPresence.Plugins.Default
 
         private static void OnLobby()
         {
+            if (!IsConnected)
+                return;
+
             SetTimestamp();
         }
 
@@ -781,32 +784,6 @@ namespace LabPresence.Plugins.Default
                 return null;
 
             return registered.GetOverrideTime();
-        }
-
-        public static float GetGamemodeMinimumDelay()
-        {
-            if (!IsConnected) return 0;
-            else return Internal_GetGamemodeMinimumDelay();
-        }
-
-        private static float Internal_GetGamemodeMinimumDelay()
-        {
-            if (!LabFusion.SDK.Gamemodes.GamemodeManager.IsGamemodeStarted)
-                return 0;
-
-            var gamemode = LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
-            if (gamemode == null)
-                return 0;
-
-            var registered = Gamemodes.GetGamemode(gamemode.Barcode);
-            if (registered == null)
-                return 0;
-
-            var toolTip = registered.GetToolTipValue();
-            if (string.IsNullOrWhiteSpace(toolTip))
-                return 0;
-            else
-                return registered.MinimumDelay;
         }
 
         public static (string key, string tooltip) GetGamemodeRPC()
