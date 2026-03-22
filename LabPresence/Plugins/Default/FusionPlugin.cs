@@ -805,41 +805,9 @@ namespace LabPresence.Plugins.Default
             var val = registered?.CustomToolTip != null ? GamemodeManager.GetToolTipValue(gamemode.Barcode) : string.Empty;
 
             if (FusionPlugin.Instance.GetConfig().ShowCustomGamemodeToolTips)
-                return (GetGamemodeKey(gamemode.Barcode), !string.IsNullOrWhiteSpace(val) ? $"{gamemode.Title} | {val}" : gamemode.Title);
+                return (GamemodeManager.GetGamemodeKey(gamemode.Barcode), !string.IsNullOrWhiteSpace(val) ? $"{gamemode.Title} | {val}" : gamemode.Title);
             else
-                return (GetGamemodeKey(gamemode.Barcode), gamemode.Title);
-        }
-
-        private static JsonDocument KnownGamemodesCache;
-
-        public static string GetGamemodeKey(string barcode)
-        {
-            try
-            {
-                const string knownGamemodes = "https://github.com/HAHOOS/LabPresence/blob/master/Data/gamemodes.json?raw=true";
-                if (KnownGamemodesCache == null)
-                {
-                    var client = new HttpClient();
-                    var req = client.GetAsync(knownGamemodes);
-                    req.Wait();
-                    if (req.IsCompletedSuccessfully && req.Result.IsSuccessStatusCode)
-                    {
-                        var content = req.Result.Content.ReadAsStringAsync();
-                        content.Wait();
-                        if (content.IsCompletedSuccessfully)
-                        {
-                            KnownGamemodesCache = JsonDocument.Parse(content.Result);
-                        }
-                    }
-                }
-                if (KnownGamemodesCache != null && KnownGamemodesCache.RootElement.TryGetProperty(barcode, out JsonElement val))
-                    return val.GetString();
-            }
-            catch (Exception e)
-            {
-                Logger.Error($"An unexpected error has occurred while trying to remotely get a key for the gamemode, defaulting to unknown key. Exception:\n{e}");
-            }
-            return "unknown_gamemode";
+                return (GamemodeManager.GetGamemodeKey(gamemode.Barcode), gamemode.Title);
         }
 
         private static void Update()

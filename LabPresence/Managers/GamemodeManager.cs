@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Text.Json;
 
 namespace LabPresence.Managers
 {
@@ -34,8 +36,17 @@ namespace LabPresence.Managers
         public static void RegisterGamemode(string barcode, Func<Timestamp> overrideTime)
             => RegisterGamemode(new(overrideTime: overrideTime), barcode);
 
+        public static void RegisterGamemode(string barcode, Func<string> customToolTip, string smallImage)
+           => RegisterGamemode(new(smallImage: smallImage, customToolTip: customToolTip), barcode);
+
+        public static void RegisterGamemode(string barcode, Func<Timestamp> overrideTime, string smallImage)
+            => RegisterGamemode(new(smallImage: smallImage, overrideTime: overrideTime), barcode);
+
         public static void RegisterGamemode(string barcode, Func<string> customToolTip, Func<Timestamp> overrideTime)
             => RegisterGamemode(new(customToolTip: customToolTip, overrideTime: overrideTime), barcode);
+
+        public static void RegisterGamemode(string barcode, Func<string> customToolTip, Func<Timestamp> overrideTime, string smallImage)
+            => RegisterGamemode(new(smallImage: smallImage, customToolTip: customToolTip, overrideTime: overrideTime), barcode);
 
         public static bool UnregisterGamemode(string barcode)
         {
@@ -101,10 +112,56 @@ namespace LabPresence.Managers
 
             return ret;
         }
+
+        private static JsonDocument KnownGamemodesCache;
+
+        public static string GetGamemodeKey(string barcode)
+        {
+            if (IsGamemodeRegistered(barcode))
+            {
+                var key = GetGamemode(barcode)?.SmallImage;
+                if (!string.IsNullOrWhiteSpace(key))
+                    return key;
+            }
+
+            return GetRemoteGamemodeKey(barcode);
+        }
+
+        public static string GetRemoteGamemodeKey(string barcode)
+        {
+            try
+            {
+                const string knownGamemodes = "https://raw.githubusercontent.com/HAHOOS/LabPresence/refs/heads/master/Data/gamemodes.json";
+                if (KnownGamemodesCache == null)
+                {
+                    var client = new HttpClient();
+                    var req = client.GetAsync(knownGamemodes);
+                    req.Wait();
+                    if (req.IsCompletedSuccessfully && req.Result.IsSuccessStatusCode)
+                    {
+                        var content = req.Result.Content.ReadAsStringAsync();
+                        content.Wait();
+                        if (content.IsCompletedSuccessfully)
+                        {
+                            KnownGamemodesCache = JsonDocument.Parse(content.Result);
+                        }
+                    }
+                }
+                if (KnownGamemodesCache != null && KnownGamemodesCache.RootElement.TryGetProperty(barcode, out JsonElement val))
+                    return val.GetString();
+            }
+            catch (Exception e)
+            {
+                Core.Logger.Error($"An unexpected error has occurred while trying to remotely get a key for the gamemode, defaulting to unknown key. Exception:\n{e}");
+            }
+            return "unknown_gamemode";
+        }
     }
 
-    public class GamemodeOverrides(Func<string> customToolTip = null, Func<Timestamp> overrideTime = null)
+    public class GamemodeOverrides(string smallImage = null, Func<string> customToolTip = null, Func<Timestamp> overrideTime = null)
     {
+        public string SmallImage { get; } = smallImage;
+
         public Func<string> CustomToolTip { get; } = customToolTip;
 
         public Func<Timestamp> OverrideTime { get; } = overrideTime;
