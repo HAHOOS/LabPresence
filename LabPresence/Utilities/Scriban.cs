@@ -240,8 +240,6 @@ namespace LabPresence.Utilities
 
         public static string LevelName => Core.CleanLevelName();
 
-        public static string Platform => MelonUtils.CurrentPlatform == MelonPlatformAttribute.CompatiblePlatforms.ANDROID ? "Quest" : "PCVR";
-
         public static string MLVersion => AppDomain.CurrentDomain?.GetAssemblies()?.FirstOrDefault(x => x.GetName().Name == "MelonLoader")?.GetName()?.Version?.ToString() ?? "N/A";
 
         public static int FPS => Fps.FramesPerSecond;
