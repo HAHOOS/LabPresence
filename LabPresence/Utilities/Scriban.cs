@@ -1,9 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
+using BoneLib;
+
+using Il2CppSLZ.Marrow;
+using Il2CppSLZ.Marrow.Interaction;
+using Il2CppSLZ.Marrow.SceneStreaming;
 using Il2CppSLZ.Marrow.Warehouse;
 
+using MelonLoader;
+
 using Scriban.Runtime;
+
+using UnityEngine;
 
 namespace LabPresence.Utilities
 {
@@ -197,14 +207,69 @@ namespace LabPresence.Utilities
         public ScribanPallet Pallet { get; } = pallet ?? new ScribanPallet(boneTag.Pallet);
     }
 
-    public static class ScribanHelper
+    public class ScribanAmmo : ScriptObject
+    {
+        public static int GetAmmo(string type)
+            => AmmoInventory.Instance?._groupCounts[type] ?? 0;
+
+        public static int Light => GetAmmo("light");
+
+        public static int Medium => GetAmmo("medium");
+
+        public static int Heavy => GetAmmo("heavy");
+    }
+
+    public class ScribanPlayer : ScriptObject
+    {
+        public static ScribanCrate Avatar => Player.RigManager?.AvatarCrate?.Crate != null ? new ScribanCrate(Player.RigManager?.AvatarCrate?.Crate) : null;
+
+        public static ScribanCrate LeftHand => Core.GetInHand(Handedness.LEFT) != null ? new ScribanCrate(Core.GetInHand(Handedness.LEFT)) : null;
+
+        public static ScribanCrate RightHand => Core.GetInHand(Handedness.RIGHT) != null ? new ScribanCrate(Core.GetInHand(Handedness.RIGHT)) : null;
+
+        public static float Health => Player.RigManager?.health?.curr_Health ?? 0;
+
+        public static float MaxHealth => Player.RigManager?.health?.max_Health ?? 0;
+
+        public static float HealthPercentange => (Health / MaxHealth) * 100;
+    }
+
+    public class ScribanGame : ScriptObject
+    {
+        public static ScribanCrate Level => SceneStreamer.Session?.Level != null ? new ScribanCrate(SceneStreamer.Session?.Level) : null;
+
+        public static string LevelName => Core.CleanLevelName();
+
+        public static string Platform => MelonUtils.CurrentPlatform == MelonPlatformAttribute.CompatiblePlatforms.ANDROID ? "Quest" : "PCVR";
+
+        public static string MLVersion => AppDomain.CurrentDomain?.GetAssemblies()?.FirstOrDefault(x => x.GetName().Name == "MelonLoader")?.GetName()?.Version?.ToString() ?? "N/A";
+
+        public static int FPS => Fps.FramesPerSecond;
+
+        public static string OperatingSystem => SystemInfo.operatingSystem;
+
+        public static int ModsCount
+        {
+            get
+            {
+                var modsCount = 0;
+                if (AssetWarehouse.ready && AssetWarehouse.Instance != null)
+                    modsCount = (AssetWarehouse.Instance.PalletCount() - AssetWarehouse.Instance.gamePallets.Count);
+
+                return modsCount;
+            }
+        }
+
+        public static int CodeModsCount => Core.RegisteredMelons.Count;
+    }
+
+    public class ScribanUtils : ScriptObject
     {
         public static ScribanPallet GetPallet(string barcode)
         {
             if (AssetWarehouse.Instance.TryGetPallet(new Barcode(barcode), out var pallet))
-            {
                 return new ScribanPallet(pallet);
-            }
+
             return null;
         }
 

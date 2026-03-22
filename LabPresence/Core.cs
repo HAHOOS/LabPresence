@@ -170,7 +170,7 @@ namespace LabPresence
                 RichPresenceManager.SetTimestamp((ulong)LevelLaunch.ToUnixTimeMilliseconds(), null, autoUpdate);
         }
 
-        private static SpawnableCrate GetInHand(Handedness handType)
+        public static SpawnableCrate GetInHand(Handedness handType)
         {
             var hand = handType == Handedness.LEFT ? Player.LeftHand : Player.RightHand;
             return hand?.AttachedReceiver?.Host?.GetGrip()?._marrowEntity?._poolee?.SpawnableCrate;
@@ -180,37 +180,18 @@ namespace LabPresence
         {
             PlaceholderManager.RegisterPlaceholder("default", () =>
             {
-                var modsCount = 0;
-                if (AssetWarehouse.ready && AssetWarehouse.Instance != null)
-                    modsCount = (AssetWarehouse.Instance.PalletCount() - AssetWarehouse.Instance.gamePallets.Count);
-
-                var scriptObject = new ScriptObject
+                var scriptObject = new ScriptObject(StringComparer.OrdinalIgnoreCase)
                 {
-                    { "level", SceneStreamer.Session?.Level != null ? new ScribanCrate(SceneStreamer.Session?.Level) : null  },
-                    { "levelName", CleanLevelName() },
-                    { "platform", MelonUtils.CurrentPlatform == MelonPlatformAttribute.CompatiblePlatforms.ANDROID ? "Quest" : "PCVR" },
-                    { "mlVersion", AppDomain.CurrentDomain?.GetAssemblies()?.FirstOrDefault(x => x.GetName().Name == "MelonLoader")?.GetName()?.Version?.ToString() ?? "N/A" },
-                    { "health", Player.RigManager?.health?.curr_Health ?? 0 },
-                    { "maxHealth", Player.RigManager?.health?.max_Health ?? 0  },
-                    { "healthPercentage", MathF.Floor(((Player.RigManager?.health?.curr_Health ?? 0) / (Player.RigManager?.health?.max_Health ?? 0)) * 100) },
-                    { "fps", Fps.FramesPerSecond },
-                    { "operatingSystem", SystemInfo.operatingSystem },
-                    { "avatar", Player.RigManager?.AvatarCrate?.Crate != null ? new ScribanCrate(Player.RigManager?.AvatarCrate?.Crate) : null },
-                    { "avatarName", RemoveUnityRichText(Player.RigManager?.AvatarCrate?.Crate?.Title ?? "N/A")  },
-                    { "leftHand", GetInHand(Handedness.LEFT) != null ? new ScribanCrate(GetInHand(Handedness.LEFT)) : null  },
-                    { "rightHand", GetInHand(Handedness.RIGHT) != null ? new ScribanCrate(GetInHand(Handedness.RIGHT)) : null },
-                    { "codeModsCount", RegisteredMelons.Count },
-                    { "modsCount", modsCount },
-                    { "ammoLight", AmmoInventory.Instance?._groupCounts["light"] ?? 0 },
-                    { "ammoMedium", AmmoInventory.Instance?._groupCounts["medium"] ?? 0  },
-                    { "ammoHeavy", AmmoInventory.Instance?._groupCounts["heavy"] ?? 0 }
+                    { "game", new ScribanGame() },
+                    { "player", new ScribanPlayer() },
+                    { "ammo", new ScribanAmmo() }
                 };
 
                 return scriptObject;
             });
         }
 
-        private static string CleanLevelName()
+        public static string CleanLevelName()
         {
             var level = SceneStreamer.Session?.Level?.Title;
             if (level == null)

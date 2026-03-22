@@ -80,8 +80,10 @@ namespace LabPresence.Managers
 
             var content = new TemplateContext();
 
-            var defaultObject = new ScriptObject();
-            defaultObject.Import(typeof(ScribanHelper));
+            var defaultObject = new ScriptObject(StringComparer.OrdinalIgnoreCase)
+            {
+                { "utils", new ScribanUtils() }
+            };
             content.PushGlobal(defaultObject);
 
             foreach (var placeholder in _Placeholders)

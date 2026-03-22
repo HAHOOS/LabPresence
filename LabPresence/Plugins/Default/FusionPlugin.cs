@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
@@ -13,12 +12,12 @@ using DiscordRPC.Message;
 
 using Il2CppSLZ.Marrow.SceneStreaming;
 
-using LabFusion.SDK.Gamemodes;
-
 using LabPresence.Config;
 using LabPresence.Managers;
 
 using MelonLoader;
+
+using Scriban.Runtime;
 
 using Semver;
 
@@ -51,14 +50,9 @@ namespace LabPresence.Plugins.Default
 
             PlaceholderManager.RegisterPlaceholder("labfusion", () =>
             {
-                return new()
+                return new(StringComparer.OrdinalIgnoreCase)
                 {
-                    {"fusion_lobbyName", Fusion.GetLobbyName() },
-                    {"fusion_host", Fusion.GetHost()},
-                    {"fusion_permissionLevel", Fusion.GetPermissionLevel()},
-                    {"fusion_currentPlayers", Fusion.GetPlayerCount().current},
-                    {"fusion_maxPlayers", Fusion.GetPlayerCount().max},
-                    {"fusion_privacy", Enum.GetName(Fusion.GetPrivacy()).Replace("_", " ")}
+                    {"fusion", new ScribanFusion() }
                 };
             });
 
@@ -874,7 +868,7 @@ namespace LabPresence.Plugins.Default
         private static void Update()
         {
             if (Core.Config.TimeMode == TimeMode.Level && FusionPlugin.Instance.GetConfig().OverrideTimeToLobby && !IsConnected)
-                RichPresenceManager.SetTimestampStartToNow();
+                Core.ConfigureTimestamp(true);
 
             if (RichPresenceManager.CurrentConfig == FusionPlugin.Instance.GetConfig().LevelLoaded && !IsConnected)
                 Overwrites.OnLevelLoaded.Run();
@@ -894,5 +888,24 @@ namespace LabPresence.Plugins.Default
 
             Locked = 3,
         }
+    }
+
+    public class ScribanFusion : ScriptObject
+    {
+        public static string LobbyName => Fusion.GetLobbyName();
+
+        public static ulong LobbyID => Fusion.GetLobbyID();
+
+        public static string Host => Fusion.GetHost();
+
+        public static string PermissionLevel => Fusion.GetPermissionLevel();
+
+        public static int CurrentPlayers => Fusion.GetPlayerCount().current;
+
+        public static int MaxPlayers => Fusion.GetPlayerCount().max;
+
+        public static string NetworkLayer => Fusion.GetCurrentNetworkLayerTitle();
+
+        public static string PrivacyLevel => Enum.GetName(Fusion.GetPrivacy()).Replace("_", " ");
     }
 }
