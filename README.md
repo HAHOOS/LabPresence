@@ -19,4 +19,4 @@ It is recommended that you simply remove the folder that contains the configurat
 
 <h2 align="center">Credits</h2>
 
-This mod mostly relies on [discord-rpc-sharp](https://github.com/Lachee/discord-rpc-csharp), without the library it would have been very difficult for me to get this mod done. So most of the credits go to the person behind the port, [Lachee](https://github.com/Lachee)
+This mod mostly relies on [Discord RPC C#](https://github.com/Lachee/discord-rpc-csharp), without the library it would have been very difficult for me to get this mod done. So most of the credits go to the person behind the port, [Lachee](https://github.com/Lachee)
