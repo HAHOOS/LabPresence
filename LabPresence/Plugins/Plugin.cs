@@ -37,6 +37,11 @@ namespace LabPresence.Plugins
             if (MenuPage != null || !CreatesMenu)
                 return;
             MenuPage = MenuManager.PluginsPage.CreatePage(Name, MenuColor);
+
+            MenuPage.CreateFunction($"Version: v{Version}", Color.white, null).SetProperty(ElementProperties.NoBorder);
+            MenuPage.CreateFunction($"Author: {Author}", Color.white, null).SetProperty(ElementProperties.NoBorder);
+            MenuPage.CreateFunction(string.Empty, Color.white, null).SetProperty(ElementProperties.NoBorder);
+
             PopulateMenu(MenuPage);
         }
 

@@ -27,7 +27,7 @@ namespace LabPresence.Managers
         public static void UpdateTimestamp()
         {
             if (Core.Client.CurrentPresence != null)
-                Core.Client.Update(x => x.Timestamps = OverrideTimestamp != null ? OverrideTimestamp?.Timestamp?.ToRPC() : Timestamp.ToRPC());
+                Core.Client.Update(x => x.Timestamps = (OverrideTimestamp?.Timestamp != null) ? OverrideTimestamp?.Timestamp?.ToRPC() : Timestamp.ToRPC());
         }
 
         private static float time = 0f;
@@ -56,9 +56,6 @@ namespace LabPresence.Managers
             }
         }
 
-        public static void SetTimestamp(ulong? start, ulong? end, bool autoUpdate = false)
-            => SetTimestamp(new(start, end), autoUpdate);
-
         public static void SetTimestamp(Timestamp timestamp, bool autoUpdate = false)
         {
             Timestamp = timestamp;
@@ -66,6 +63,9 @@ namespace LabPresence.Managers
             if (autoUpdate)
                 UpdateTimestamp();
         }
+
+        public static void SetTimestamp(ulong? start, ulong? end, bool autoUpdate = false)
+            => SetTimestamp(new(start, end), autoUpdate);
 
         public static void SetTimestampStartToNow(bool autoUpdate = false)
             => SetTimestamp(Timestamp.Now, autoUpdate);
@@ -126,7 +126,7 @@ namespace LabPresence.Managers
             {
                 Details = det,
                 State = stat,
-                Timestamps = OverrideTimestamp?.Timestamp?.ToRPC() ?? Timestamp?.ToRPC(),
+                Timestamps = (OverrideTimestamp?.Timestamp != null) ? OverrideTimestamp?.Timestamp?.ToRPC() : Timestamp?.ToRPC(),
                 Type = type,
                 Assets = CreateAssets(largeImage, smallImage),
                 Party = party,
