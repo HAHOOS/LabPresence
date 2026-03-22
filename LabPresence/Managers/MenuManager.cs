@@ -43,6 +43,7 @@ namespace LabPresence.Managers
             ConfigPage.CreateEnum("RPC Log Level", FromRGB(255, 172, 28), Core.Config.RPCLogLevel, (val) => { Core.Config.RPCLogLevel = (LogLevel)val; Core.Category.SaveToFile(false); Core.Client?.Logger?.Level = (LogLevel)val; });
             ConfigPage.CreateEnum("Time Mode", FromRGB(191, 255, 0), Core.Config.TimeMode, (val) => { Core.Config.TimeMode = (TimeMode)val; Core.Category.SaveToFile(false); Core.ConfigureTimestamp(true); }).SetTooltip("What the Rich Presence will display as time, available options: Level (since the current level was loaded), CurrentTime (the current time, example: 15:53:50) and GameSession (since the game was launched)");
             ConfigPage.CreateBool("Remove Level Numbers", Color.red, Core.Config.RemoveLevelNumbers, (val) => { Core.Config.RemoveLevelNumbers = val; Core.Category.SaveToFile(false); }).SetTooltip("If true, in for example '15 - Void G114' the '15 - ' will be removed and only 'Void G114' will be shown in the 'levelName' placeholder");
+            ConfigPage.CreateBool("Use Animated Logo", Color.cyan, Core.Config.UseAnimatedLogo, (val) => { Core.Config.UseAnimatedLogo = val; Core.Category.SaveToFile(false); }).SetTooltip("If true, the large image will be animated (with a black blackground), otherwise a transparent static image will be used");
         }
 
         public static void PopulatePlugins()

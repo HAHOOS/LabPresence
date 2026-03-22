@@ -642,12 +642,12 @@ namespace LabPresence.Plugins.Default
                     RichPresenceManager.ResetOverrideTimestamp(true);
             };
 
-            Gamemodes.RegisterGamemode("Lakatrazz.Hide And Seek", HideAndSeekTooltip);
-            Gamemodes.RegisterGamemode("Lakatrazz.Deathmatch", DeathmatchTooltip);
-            Gamemodes.RegisterGamemode("Lakatrazz.Team Deathmatch", TeamDeathmatchTooltip);
-            Gamemodes.RegisterGamemode("Lakatrazz.Entangled", EntangledTooltip);
-            Gamemodes.RegisterGamemode("Lakatrazz.Smash Bones", SmashBonesTooltip);
-            Gamemodes.RegisterGamemode("Lakatrazz.Juggernaut", JuggernautTooltip);
+            GamemodeManager.RegisterGamemode("Lakatrazz.Hide And Seek", HideAndSeekTooltip);
+            GamemodeManager.RegisterGamemode("Lakatrazz.Deathmatch", DeathmatchTooltip);
+            GamemodeManager.RegisterGamemode("Lakatrazz.Team Deathmatch", TeamDeathmatchTooltip);
+            GamemodeManager.RegisterGamemode("Lakatrazz.Entangled", EntangledTooltip);
+            GamemodeManager.RegisterGamemode("Lakatrazz.Smash Bones", SmashBonesTooltip);
+            GamemodeManager.RegisterGamemode("Lakatrazz.Juggernaut", JuggernautTooltip);
         }
 
         private static void OnLobby()
@@ -778,12 +778,12 @@ namespace LabPresence.Plugins.Default
                 return null;
 
             var gamemode = LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
-            var registered = Gamemodes.GetGamemode(gamemode.Barcode);
+            var registered = GamemodeManager.GetGamemode(gamemode.Barcode);
 
             if (registered?.OverrideTime == null)
                 return null;
 
-            return registered.GetOverrideTime();
+            return GamemodeManager.GetOverrideTime(gamemode.Barcode);
         }
 
         public static (string key, string tooltip) GetGamemodeRPC()
@@ -801,8 +801,8 @@ namespace LabPresence.Plugins.Default
                 return (null, null);
 
             var gamemode = LabFusion.SDK.Gamemodes.GamemodeManager.ActiveGamemode;
-            var registered = Gamemodes.GetGamemode(gamemode.Barcode);
-            var val = registered?.CustomToolTip != null ? registered.GetToolTipValue() : string.Empty;
+            var registered = GamemodeManager.GetGamemode(gamemode.Barcode);
+            var val = registered?.CustomToolTip != null ? GamemodeManager.GetToolTipValue(gamemode.Barcode) : string.Empty;
 
             if (FusionPlugin.Instance.GetConfig().ShowCustomGamemodeToolTips)
                 return (GetGamemodeKey(gamemode.Barcode), !string.IsNullOrWhiteSpace(val) ? $"{gamemode.Title} | {val}" : gamemode.Title);

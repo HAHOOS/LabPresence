@@ -8,6 +8,7 @@ using MelonLoader;
 [assembly: MelonGame("Stress Level Zero", "BONELAB")]
 [assembly: MelonPriority(-1000)]
 [assembly: MelonOptionalDependencies("LabFusion", "DiscordRPC", "Scriban")]
+[assembly: MelonPlatform(MelonPlatformAttribute.CompatiblePlatforms.WINDOWS_X64)]
 
 #endregion MelonLoader
 

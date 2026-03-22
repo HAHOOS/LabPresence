@@ -108,7 +108,11 @@ namespace LabPresence.Managers
             if (Core.Client?.IsInitialized != true)
                 throw new InvalidOperationException("The RPC client is not initialized!");
 
-            largeImage ??= new("icon", "BONELAB");
+            if (Core.Config.UseAnimatedLogo)
+                largeImage ??= new("https://raw.githubusercontent.com/HAHOOS/LabPresence/refs/heads/master/Data/animated.gif", "BONELAB");
+            else
+                largeImage ??= new("icon", "BONELAB");
+
             if (!ValidateString(Core.RemoveUnityRichText(details?.ApplyPlaceholders()), out string det, false, 128, Encoding.UTF8) ||
                 !ValidateString(Core.RemoveUnityRichText(state?.ApplyPlaceholders()), out string stat, false, 128, Encoding.UTF8) ||
                 !ValidateString(Core.RemoveUnityRichText(largeImage?.ToolTip?.ApplyPlaceholders()), out string large, false, 128, Encoding.UTF8) ||

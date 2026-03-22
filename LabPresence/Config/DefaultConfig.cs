@@ -18,6 +18,10 @@ namespace LabPresence.Config
         [TomlProperty("RemoveLevelNumbers")]
         public bool RemoveLevelNumbers { get; set; } = true;
 
+        [TomlPrecedingComment("If true, the large image will be animated (with a black blackground), otherwise a transparent static image will be used")]
+        [TomlProperty("UseAnimatedLogo")]
+        public bool UseAnimatedLogo { get; set; } = true;
+
         [TomlProperty("PreGameStarted")]
         public RpcConfig PreGameStarted { get; set; } = new("Game loading...", "{{ game.code_mods_count }} melons");
 
