@@ -426,6 +426,21 @@ namespace LabPresence.Plugins.Default
             return lobbyInfo.LobbyCode;
         }
 
+        public static (string username, string displayName) GetCurrentPlayer()
+        {
+            if (!IsConnected) return (null, null);
+            else return Internal_GetCurrentPlayer();
+        }
+
+        private static (string username, string displayName) Internal_GetCurrentPlayer()
+        {
+            string username = LabFusion.Player.LocalPlayer.Username;
+            if (LabFusion.Network.MetadataHelper.TryGetDisplayName(LabFusion.Player.PlayerIDManager.LocalID, out string display))
+                display = username;
+
+            return (username, display);
+        }
+
         public static string GetCurrentNetworkLayerTitle()
         {
             if (!IsConnected) return null;
@@ -846,6 +861,10 @@ namespace LabPresence.Plugins.Default
 
     public class ScribanFusion : ScriptObject
     {
+        public static string Username => Fusion.GetCurrentPlayer().username;
+
+        public static string DisplayName => Fusion.GetCurrentPlayer().displayName;
+
         public static string LobbyName => Fusion.GetLobbyName();
 
         public static ulong LobbyID => Fusion.GetLobbyID();
