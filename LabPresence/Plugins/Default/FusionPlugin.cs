@@ -64,6 +64,14 @@ namespace LabPresence.Plugins.Default
 
             MelonEvents.OnUpdate.Subscribe(Update);
             HasFusion();
+            ValidateConfig();
+        }
+
+        public void ValidateConfig()
+        {
+            if (!GetConfig().LevelLoaded.ValidateConfig()) GetConfig().LevelLoaded = new Config.FusionConfig().LevelLoaded;
+            if (!GetConfig().LevelLoading.ValidateConfig()) GetConfig().LevelLoading = new Config.FusionConfig().LevelLoading;
+            Category.SaveToFile(false);
         }
 
         public override void PopulateMenu(Page page)

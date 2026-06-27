@@ -64,9 +64,12 @@ namespace LabPresence
 
             LoggerInstance.Msg("Creating preferences");
             var dir = Directory.CreateDirectory(Path.Combine(MelonEnvironment.UserDataDirectory, "LabPresence"));
-            Category = MelonPreferences.CreateCategory<LabPresence.Config.DefaultConfig>("LabPresenceConfig", "Lab Presence Config");
+            Category = MelonPreferences.CreateCategory<Config.DefaultConfig>("LabPresenceConfig", "Lab Presence Config");
             Category.SetFilePath(Path.Combine(dir.FullName, "default.cfg"), true, false);
             Category.SaveToFile(false);
+
+            LoggerInstance.Msg("Validating config for obsolete placeholders");
+            ValidateDefaultConfig();
 
             LoggerInstance.Msg("Initializing Thunderstore");
             Thunderstore = new Thunderstore($"LabPresence / {Version} A BONELAB Mod");
@@ -145,6 +148,16 @@ namespace LabPresence
             MenuManager.Init();
 
             LoggerInstance.Msg("Initialized.");
+        }
+
+        public static void ValidateDefaultConfig()
+        {
+            if (!Config.LevelLoaded.ValidateConfig()) Config.LevelLoaded = new Config.DefaultConfig().LevelLoaded;
+            if (!Config.LevelLoading.ValidateConfig()) Config.LevelLoading = new Config.DefaultConfig().LevelLoading;
+            if (!Config.PreGameStarted.ValidateConfig()) Config.PreGameStarted = new Config.DefaultConfig().PreGameStarted;
+            if (!Config.PreGameStarted.ValidateConfig()) Config.PreGameStarted = new Config.DefaultConfig().PreGameStarted;
+            if (!Config.AssetWarehouseLoaded.ValidateConfig()) Config.AssetWarehouseLoaded = new Config.DefaultConfig().AssetWarehouseLoaded;
+            Category.SaveToFile(false);
         }
 
         private void RegisterURIScheme()

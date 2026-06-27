@@ -250,6 +250,21 @@ namespace LabPresence.Managers
             var bytes = Convert.FromBase64String(secret);
             return Encoding.UTF8.GetString(bytes);
         }
+
+        public static bool ValidateConfig(this RpcConfig config)
+        {
+            string[] obsolete = ["%levelName%", "%avatarName%", "%platform%", "%mlVersion%", "%health%", "%maxHealth%",
+                "%healthPercentange%", "%fps%", "%operatingSystem%", "%codeModsCount%", "%modsCount%", "%ammoLight%", "%ammoMedium%", "%ammoHeavy%",
+                "%fusion_lobbyName%", "%fusion_host%", "%fusion_currentPlayers%", "%fusion_maxPlayers%", "%fusion_privacy%"];
+            foreach (var ob in obsolete)
+            {
+                if (config.Details.Contains(ob))
+                    return false;
+                else if (config.State.Contains(ob))
+                    return false;
+            }
+            return true;
+        }
     }
 
     public class Presence(RpcConfig config, ActivityType type, Party party, Secrets secrets, Asset largeImage, Asset smallImage)
