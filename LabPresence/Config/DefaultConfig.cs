@@ -6,6 +6,10 @@ namespace LabPresence.Config
 {
     public class DefaultConfig()
     {
+        [TomlPrecedingComment("If false, the mod will not update the Discord Rich Presence")]
+        [TomlProperty("Enabled")]
+        public bool Enabled { get; set; } = true;
+
         [TomlPrecedingComment("The logs of RPC that will be displayed, available: None, Trace, Info, Warning, Error")]
         [TomlProperty("RPCLogLevel")]
         public LogLevel RPCLogLevel { get; set; } = LogLevel.Error;

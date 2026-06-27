@@ -128,16 +128,23 @@ namespace LabPresence.Managers
             largeImage?.ToolTip = large;
             smallImage?.ToolTip = small;
 
-            Core.Client.SetPresence(new DiscordRPC.RichPresence()
+            if (Core.Config.Enabled)
             {
-                Details = det,
-                State = stat,
-                Timestamps = (OverrideTimestamp?.Timestamp != null) ? OverrideTimestamp?.Timestamp?.ToRPC() : Timestamp?.ToRPC(),
-                Type = type,
-                Assets = CreateAssets(largeImage, smallImage),
-                Party = party,
-                Secrets = secrets,
-            });
+                Core.Client.SetPresence(new RichPresence()
+                {
+                    Details = det,
+                    State = stat,
+                    Timestamps = (OverrideTimestamp?.Timestamp != null) ? OverrideTimestamp?.Timestamp?.ToRPC() : Timestamp?.ToRPC(),
+                    Type = type,
+                    Assets = CreateAssets(largeImage, smallImage),
+                    Party = party,
+                    Secrets = secrets,
+                });
+            }
+            else
+            {
+                Core.Client.ClearPresence();
+            }
         }
 
         private static Assets CreateAssets(Asset largeImage, Asset smallImage)
