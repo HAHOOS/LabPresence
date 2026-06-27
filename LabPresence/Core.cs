@@ -68,9 +68,6 @@ namespace LabPresence
             Category.SetFilePath(Path.Combine(dir.FullName, "default.cfg"), true, false);
             Category.SaveToFile(false);
 
-            LoggerInstance.Msg("Validating config for obsolete placeholders");
-            ValidateDefaultConfig();
-
             LoggerInstance.Msg("Initializing Thunderstore");
             Thunderstore = new Thunderstore($"LabPresence / {Version} A BONELAB Mod");
             Thunderstore.BL_FetchPackage("LabPresence", "HAHOOS", Version, LoggerInstance);
@@ -78,6 +75,9 @@ namespace LabPresence
             LoggerInstance.Msg("Adding placeholders");
 
             AddDefaultPlaceholders();
+
+            LoggerInstance.Msg("Validating config for obsolete placeholders");
+            ValidateDefaultConfig();
 
             LoggerInstance.Msg("Initializing...");
 

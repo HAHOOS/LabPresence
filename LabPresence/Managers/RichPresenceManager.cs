@@ -253,14 +253,21 @@ namespace LabPresence.Managers
 
         public static bool ValidateConfig(this RpcConfig config)
         {
+            if (config == null)
+            {
+                Core.Logger.Error("An empty RpcConfig was provided for validation!");
+                return true;
+            }
+
             string[] obsolete = ["%levelName%", "%avatarName%", "%platform%", "%mlVersion%", "%health%", "%maxHealth%",
                 "%healthPercentange%", "%fps%", "%operatingSystem%", "%codeModsCount%", "%modsCount%", "%ammoLight%", "%ammoMedium%", "%ammoHeavy%",
                 "%fusion_lobbyName%", "%fusion_host%", "%fusion_currentPlayers%", "%fusion_maxPlayers%", "%fusion_privacy%"];
+
             foreach (var ob in obsolete)
             {
-                if (config.Details.Contains(ob))
+                if (!string.IsNullOrWhiteSpace(config.Details) && config.Details.Contains(ob))
                     return false;
-                else if (config.State.Contains(ob))
+                else if (!string.IsNullOrWhiteSpace(config.State) && config.State.Contains(ob))
                     return false;
             }
             return true;
