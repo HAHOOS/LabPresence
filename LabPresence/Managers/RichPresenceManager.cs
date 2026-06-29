@@ -100,15 +100,16 @@ namespace LabPresence.Managers
 
             Core.Logger.Msg("presence update");
 
-            largeImage?.ToolTip = Core.RemoveUnityRichText(largeImage?.ToolTip?.ApplyPlaceholders());
-            smallImage?.ToolTip = Core.RemoveUnityRichText(smallImage?.ToolTip?.ApplyPlaceholders());
+            var context = PlaceholderManager.GetTemplateContext();
+            largeImage?.ToolTip = Core.RemoveUnityRichText(largeImage?.ToolTip?.ApplyPlaceholders(context));
+            smallImage?.ToolTip = Core.RemoveUnityRichText(smallImage?.ToolTip?.ApplyPlaceholders(context));
 
             if (Core.Config.Enabled)
             {
                 Core.Client.SetPresence(new RichPresence()
                 {
-                    Details = Core.RemoveUnityRichText(details?.ApplyPlaceholders()),
-                    State = Core.RemoveUnityRichText(state?.ApplyPlaceholders()),
+                    Details = Core.RemoveUnityRichText(details?.ApplyPlaceholders(context)),
+                    State = Core.RemoveUnityRichText(state?.ApplyPlaceholders(context)),
                     Timestamps = (OverrideTimestamp?.Timestamp != null) ? OverrideTimestamp?.Timestamp?.ToRPC() : Timestamp?.ToRPC(),
                     Type = type,
                     Assets = CreateAssets(largeImage, smallImage),

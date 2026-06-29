@@ -7,6 +7,8 @@ using LabPresence.Utilities;
 using Scriban;
 using Scriban.Runtime;
 
+using static System.Net.Mime.MediaTypeNames;
+
 namespace LabPresence.Managers
 {
     public static class PlaceholderManager
@@ -64,19 +66,8 @@ namespace LabPresence.Managers
         public static int GetPlaceholderCount()
             => _Placeholders.Count;
 
-        public static string ApplyPlaceholders(this string text)
+        public static TemplateContext GetTemplateContext()
         {
-            var template = Template.Parse(text);
-
-            if (template.HasErrors)
-            {
-                Core.Logger.Error($"An error occurred while parsing the text! '{text}'");
-                foreach (var error in template.Messages)
-                    Core.Logger.Error($"{(error.Type == Scriban.Parsing.ParserMessageType.Error ? "[ERR]" : "[WARN]")} {error.Message}");
-
-                return text;
-            }
-
             var content = new TemplateContext();
 
             var defaultObject = new ScriptObject(StringComparer.OrdinalIgnoreCase)
@@ -97,7 +88,25 @@ namespace LabPresence.Managers
                 }
             }
 
-            return template.Render(content);
+            return content;
+        }
+
+        public static string ApplyPlaceholders(this string text, TemplateContext context = null)
+        {
+            var template = Template.Parse(text);
+
+            if (template.HasErrors)
+            {
+                Core.Logger.Error($"An error occurred while parsing the text! '{text}'");
+                foreach (var error in template.Messages)
+                    Core.Logger.Error($"{(error.Type == Scriban.Parsing.ParserMessageType.Error ? "[ERR]" : "[WARN]")} {error.Message}");
+
+                return text;
+            }
+
+            context ??= GetTemplateContext();
+
+            return template.Render(context);
         }
     }
 
