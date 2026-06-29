@@ -88,7 +88,6 @@ namespace LabPresence.Managers
             if (autoUpdate) UpdateTimestamp();
         }
 
-        // This is apparently causing lag spikes???
         private static void SetRichPresence(string details, string state, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, Asset largeImage = null, Asset smallImage = null)
         {
             if (Core.Client?.IsInitialized != true)
