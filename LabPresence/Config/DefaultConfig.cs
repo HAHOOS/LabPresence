@@ -18,7 +18,7 @@ namespace LabPresence.Config
         [TomlProperty("RPCLogLevel")]
         public LogLevel RPCLogLevel { get; set; } = LogLevel.Error;
 
-        [TomlPrecedingComment("What the Rich Presence will display as time, available options: Level (since the current level was loaded), CurrentTime (the current time, example: 15:53:50) and GameSession (since the game was launched)")]
+        [TomlPrecedingComment("What the Rich Presence will display as time, available options:\n -> Level (since the current level was loaded)\n -> CurrentTime (the current time, example: 15:53:50)\n -> GameSession (since the game was launched)")]
         [TomlProperty("TimeMode")]
         public TimeMode TimeMode { get; set; } = TimeMode.GameSession;
 
