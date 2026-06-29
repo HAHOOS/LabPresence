@@ -142,9 +142,7 @@ namespace LabPresence.Managers
                         var content = req.Result.Content.ReadAsStringAsync();
                         content.Wait();
                         if (content.IsCompletedSuccessfully)
-                        {
                             KnownGamemodesCache = JsonDocument.Parse(content.Result);
-                        }
                     }
                 }
                 if (KnownGamemodesCache != null && KnownGamemodesCache.RootElement.TryGetProperty(barcode, out JsonElement val))

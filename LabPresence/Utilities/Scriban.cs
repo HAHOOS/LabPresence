@@ -33,12 +33,17 @@ namespace LabPresence.Utilities
 
         public ScriptArray<string> Tags { get; }
 
-        public ScriptArray<ScribanBoneTag> BoneTags { get; }
+        public ScriptArray<string> BoneTags { get; }
 
-        public ScribanPallet Pallet { get; }
+        private RefGetter<ScribanPallet> RefPallet { get; }
 
-        public ScribanCrate(Crate crate, ScribanPallet pallet = null)
+        private readonly ScribanPallet _pallet;
+
+        public ScribanPallet Pallet { get { if (RefPallet != null) return RefPallet.Value; else return _pallet; } }
+
+        public ScribanCrate(Crate crate, RefGetter<ScribanPallet> pallet = null)
         {
+            Core.Logger.Msg("crate");
             Title = crate.Title;
             Description = crate.Description;
             Redacted = crate.Redacted;
@@ -48,7 +53,11 @@ namespace LabPresence.Utilities
                 Tags = [];
             else
                 Tags = [.. crate.Tags];
-            Pallet = pallet ?? new ScribanPallet(crate.Pallet);
+
+            if (pallet != null)
+                RefPallet = pallet;
+            else
+                _pallet = new ScribanPallet(crate.Pallet);
 
             if (crate.BoneTags == null || crate.BoneTags.Tags == null)
             {
@@ -56,8 +65,8 @@ namespace LabPresence.Utilities
             }
             else
             {
-                List<ScribanBoneTag> scribanBoneTags = [];
-                crate.BoneTags.Tags.ForEach((Action<BoneTagReference>)(c => scribanBoneTags.Add(new ScribanBoneTag(c.DataCard, Pallet))));
+                List<string> scribanBoneTags = [];
+                crate.BoneTags.Tags.ForEach((Action<BoneTagReference>)(c => scribanBoneTags.Add(c.Barcode.ID)));
                 BoneTags = [.. scribanBoneTags];
             }
 
@@ -99,16 +108,17 @@ namespace LabPresence.Utilities
 
         public string SDKVersion { get; }
 
-        public ScriptArray<ScribanCrate> Crates { get; }
+        public ScriptArray<string> Crates { get; }
 
         public ScriptArray<ScribanChangeLog> ChangeLogs { get; }
 
-        public ScriptArray<ScribanDataCard> DataCards { get; }
+        public ScriptArray<string> DataCards { get; }
 
         public string[] Dependencies { get; }
 
         public ScribanPallet(Pallet pallet)
         {
+            Core.Logger.Msg("pallet");
             Barcode = pallet.Barcode.ID;
             Unlockable = pallet.Unlockable;
             Redacted = pallet.Redacted;
@@ -125,8 +135,8 @@ namespace LabPresence.Utilities
             }
             else
             {
-                List<ScribanCrate> scribanCrates = [];
-                pallet.Crates.ForEach((Action<Crate>)(c => scribanCrates.Add(new ScribanCrate(c, this))));
+                List<string> scribanCrates = [];
+                pallet.Crates.ForEach((Action<Crate>)(c => scribanCrates.Add(c.Barcode.ID)));
                 Crates = [.. scribanCrates];
             }
 
@@ -152,8 +162,8 @@ namespace LabPresence.Utilities
             }
             else
             {
-                List<ScribanDataCard> scribanDataCards = [];
-                pallet.DataCards.ForEach((Action<DataCard>)(c => scribanDataCards.Add(new ScribanDataCard(c, this))));
+                List<string> scribanDataCards = [];
+                pallet.DataCards.ForEach((Action<DataCard>)(c => scribanDataCards.Add(c.Barcode.ID)));
                 DataCards = [.. scribanDataCards];
             }
 
@@ -179,32 +189,29 @@ namespace LabPresence.Utilities
         public string Text { get; } = changelog.text;
     }
 
-    public class ScribanDataCard(DataCard dataCard, ScribanPallet pallet = null)
+    public class ScribanDataCard
     {
-        public string Title { get; } = dataCard.Title;
-        public string Description { get; } = dataCard.Description;
+        public ScribanDataCard(DataCard dataCard)
+        {
+            Core.Logger.Msg("data card");
+            Title = dataCard.Title;
+            Description = dataCard.Description;
+            Barcode = dataCard.Barcode.ID;
+            Redacted = dataCard.Redacted;
+            Unlockable = dataCard.Unlockable;
+            Pallet = dataCard.Pallet.Barcode.ID;
+        }
 
-        public string Barcode { get; } = dataCard.Barcode.ID;
+        public string Title { get; }
+        public string Description { get; }
 
-        public bool Redacted { get; } = dataCard.Redacted;
+        public string Barcode { get; }
 
-        public bool Unlockable { get; } = dataCard.Unlockable;
+        public bool Redacted { get; }
 
-        public ScribanPallet Pallet { get; } = pallet ?? new ScribanPallet(dataCard.Pallet);
-    }
+        public bool Unlockable { get; }
 
-    public class ScribanBoneTag(BoneTag boneTag, ScribanPallet pallet = null)
-    {
-        public string Title { get; } = boneTag.Title;
-        public string Description { get; } = boneTag.Description;
-
-        public string Barcode { get; } = boneTag.Barcode.ID;
-
-        public bool Redacted { get; } = boneTag.Redacted;
-
-        public bool Unlockable { get; } = boneTag.Unlockable;
-
-        public ScribanPallet Pallet { get; } = pallet ?? new ScribanPallet(boneTag.Pallet);
+        public string Pallet { get; }
     }
 
     public class ScribanAmmo : ScriptObject
@@ -271,7 +278,33 @@ namespace LabPresence.Utilities
             return null;
         }
 
+        public static ScribanCrate GetCrate(string barcode)
+        {
+            if (AssetWarehouse.Instance.TryGetCrate(new Barcode(barcode), out var crate))
+                return new ScribanCrate(crate);
+
+            return null;
+        }
+
+        public static ScribanDataCard GetDataCard(string barcode)
+        {
+            if (AssetWarehouse.Instance.TryGetDataCard(new Barcode(barcode), out var dataCard))
+                return new ScribanDataCard(dataCard);
+
+            return null;
+        }
+
         public static string CleanString(string str)
             => Core.RemoveUnityRichText(str);
+    }
+
+    public sealed class RefGetter<T>(Func<T> getter)
+    {
+        private readonly Func<T> getter = getter;
+
+        public T Value
+        {
+            get { return getter(); }
+        }
     }
 }

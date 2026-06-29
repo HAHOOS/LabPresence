@@ -87,24 +87,7 @@ namespace LabPresence.Managers
             if (autoUpdate) UpdateTimestamp();
         }
 
-        internal static bool ValidateString(string str, out string result, bool useBytes, int length, Encoding encoding = null)
-        {
-            result = str;
-            if (str == null)
-                return true;
-
-            //Trim the string, for the best chance of fitting
-            var s = str.Trim();
-
-            //Make sure it fits
-            if ((useBytes && !s.WithinLength(length, encoding)) || s.Length > length)
-                return false;
-
-            //Make sure its not empty
-            result = s.GetNullOrString();
-            return true;
-        }
-
+        // This is apparently causing lag spikes???
         private static void SetRichPresence(string details, string state, ActivityType type = ActivityType.Playing, Party party = null, Secrets secrets = null, Asset largeImage = null, Asset smallImage = null)
         {
             if (Core.Client?.IsInitialized != true)
@@ -115,25 +98,17 @@ namespace LabPresence.Managers
             else
                 largeImage ??= new("icon", "BONELAB");
 
-            if (!ValidateString(Core.RemoveUnityRichText(details?.ApplyPlaceholders()), out string det, false, 128, Encoding.UTF8) ||
-                !ValidateString(Core.RemoveUnityRichText(state?.ApplyPlaceholders()), out string stat, false, 128, Encoding.UTF8) ||
-                !ValidateString(Core.RemoveUnityRichText(largeImage?.ToolTip?.ApplyPlaceholders()), out string large, false, 128, Encoding.UTF8) ||
-                !ValidateString(Core.RemoveUnityRichText(smallImage?.ToolTip?.ApplyPlaceholders()), out string small, false, 128, Encoding.UTF8))
-            {
-                throw new ArgumentException(
-                    message: "State, Details and/or an asset tooltip is/are over 128 bytes which Rich Presence cannot handle, try to lower the amount of characters"
-                );
-            }
+            Core.Logger.Msg("presence update");
 
-            largeImage?.ToolTip = large;
-            smallImage?.ToolTip = small;
+            largeImage?.ToolTip = Core.RemoveUnityRichText(largeImage?.ToolTip?.ApplyPlaceholders());
+            smallImage?.ToolTip = Core.RemoveUnityRichText(smallImage?.ToolTip?.ApplyPlaceholders());
 
             if (Core.Config.Enabled)
             {
                 Core.Client.SetPresence(new RichPresence()
                 {
-                    Details = det,
-                    State = stat,
+                    Details = Core.RemoveUnityRichText(details?.ApplyPlaceholders()),
+                    State = Core.RemoveUnityRichText(state?.ApplyPlaceholders()),
                     Timestamps = (OverrideTimestamp?.Timestamp != null) ? OverrideTimestamp?.Timestamp?.ToRPC() : Timestamp?.ToRPC(),
                     Type = type,
                     Assets = CreateAssets(largeImage, smallImage),
@@ -221,6 +196,7 @@ namespace LabPresence.Managers
             if (task.IsCompletedSuccessfully)
             {
                 var bytesTask = task.Result.Content.ReadAsByteArrayAsync();
+                bytesTask.Wait();
                 if (bytesTask.IsCompletedSuccessfully)
                     texture = ImageConversion.LoadTexture($"{user.DisplayName} (@{user.Username})", bytesTask.Result);
             }
@@ -235,9 +211,7 @@ namespace LabPresence.Managers
         {
             if (string.IsNullOrWhiteSpace(secret))
                 return string.Empty;
-            // Not the strongest but provides a bit of protection
-            // I mean Discord says to encrypt it so I mean yeah, I'm doing that
-            // Whatever
+
             var bytes = Encoding.UTF8.GetBytes(secret);
             return Convert.ToBase64String(bytes);
         }

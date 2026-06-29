@@ -72,9 +72,8 @@ namespace LabPresence.Managers
             {
                 Core.Logger.Error($"An error occurred while parsing the text! '{text}'");
                 foreach (var error in template.Messages)
-                {
                     Core.Logger.Error($"{(error.Type == Scriban.Parsing.ParserMessageType.Error ? "[ERR]" : "[WARN]")} {error.Message}");
-                }
+
                 return text;
             }
 
