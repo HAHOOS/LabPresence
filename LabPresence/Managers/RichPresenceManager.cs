@@ -46,8 +46,8 @@ namespace LabPresence.Managers
                     time = 0f;
                     old = CurrentPresence;
                 }
-                const float delay = 5f;
-                if (time >= delay)
+
+                if (time >= Core.Config.RefreshTime)
                 {
                     TrySetRichPresence(CurrentPresence.Config, CurrentPresence.Type, CurrentPresence.Party, CurrentPresence.Secrets, CurrentPresence.LargeImage, CurrentPresence.SmallImage);
                     time = 0f;

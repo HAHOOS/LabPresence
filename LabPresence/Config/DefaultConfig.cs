@@ -10,6 +10,10 @@ namespace LabPresence.Config
         [TomlProperty("Enabled")]
         public bool Enabled { get; set; } = true;
 
+        [TomlPrecedingComment("The interval in which the rich presence should be updated with up-to-date placeholder values")]
+        [TomlProperty("RefreshTime")]
+        public int RefreshTime { get; set; } = 5;
+
         [TomlPrecedingComment("The logs of RPC that will be displayed, available: None, Trace, Info, Warning, Error")]
         [TomlProperty("RPCLogLevel")]
         public LogLevel RPCLogLevel { get; set; } = LogLevel.Error;
