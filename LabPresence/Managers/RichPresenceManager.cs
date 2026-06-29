@@ -5,10 +5,11 @@ using System.Text;
 
 using DiscordRPC;
 using DiscordRPC.Exceptions;
-using DiscordRPC.Helper;
 
 using LabPresence.Config;
 using LabPresence.Utilities;
+
+using Scriban;
 
 using UnityEngine;
 
@@ -99,15 +100,15 @@ namespace LabPresence.Managers
                 largeImage ??= new("icon", "BONELAB");
 
             var context = PlaceholderManager.GetTemplateContext();
-            largeImage?.ToolTip = Core.RemoveUnityRichText(largeImage?.ToolTip?.ApplyPlaceholders(context));
-            smallImage?.ToolTip = Core.RemoveUnityRichText(smallImage?.ToolTip?.ApplyPlaceholders(context));
+            largeImage?.ToolTip = largeImage?.ToolTip?.Parse(context);
+            smallImage?.ToolTip = smallImage?.ToolTip?.Parse(context);
 
             if (Core.Config.Enabled)
             {
                 Core.Client.SetPresence(new RichPresence()
                 {
-                    Details = Core.RemoveUnityRichText(details?.ApplyPlaceholders(context)),
-                    State = Core.RemoveUnityRichText(state?.ApplyPlaceholders(context)),
+                    Details = details?.Parse(context),
+                    State = state?.Parse(context),
                     Timestamps = (OverrideTimestamp?.Timestamp != null) ? OverrideTimestamp?.Timestamp?.ToRPC() : Timestamp?.ToRPC(),
                     Type = type,
                     Assets = CreateAssets(largeImage, smallImage),
@@ -120,6 +121,9 @@ namespace LabPresence.Managers
                 Core.Client.ClearPresence();
             }
         }
+
+        public static string Parse(this string text, TemplateContext context = null)
+            => Core.RemoveUnityRichText(text?.ApplyPlaceholders(context));
 
         private static Assets CreateAssets(Asset largeImage, Asset smallImage)
         {
@@ -149,7 +153,7 @@ namespace LabPresence.Managers
             }
             catch (Exception ex)
             {
-                Core.Logger.Error($"An unexpected error has occurred while setting the rich presence, exception:\n{ex}");
+                Core.Logger.Error("An unexpected error has occurred while setting the rich presence", ex);
             }
             return false;
         }

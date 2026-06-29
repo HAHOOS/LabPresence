@@ -119,7 +119,7 @@ namespace LabPresence.Plugins.Default
                     PopupLength = 5f,
                     ShowTitleOnPopup = true,
                 });
-                Logger.Error($"An unexpected error has occurred while handling join request, exception:\n{ex}");
+                Logger.Error("An unexpected error has occurred while handling join request", ex);
                 return false;
             }
             return true;
@@ -190,7 +190,7 @@ namespace LabPresence.Plugins.Default
             catch (Exception ex)
             {
                 Fusion.ErrorNotif("An unexpected error has occurred while trying to join the lobby, check the console or logs for more details", 5f);
-                Logger.Error($"An unexpected error has occurred while trying to join the lobby, exception:\n{ex}");
+                Logger.Error("An unexpected error has occurred while trying to join the lobby", ex);
                 return false;
             }
             return true;
@@ -532,7 +532,7 @@ namespace LabPresence.Plugins.Default
             }
             catch (Exception ex)
             {
-                Logger.Error($"An unexpected error has occurred while ensuring fusion is on the right network layer, exception:\n{ex}");
+                Logger.Error("An unexpected error has occurred while ensuring fusion is on the right network layer", ex);
                 return false;
             }
 

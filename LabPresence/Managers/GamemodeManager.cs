@@ -85,7 +85,7 @@ namespace LabPresence.Managers
             }
             catch (Exception ex)
             {
-                Core.Logger.Error($"An unexpected error has occurred while trying to get value of tooltip of the gamemode with barcode '{barcode}', exception:\n{ex}");
+                Core.Logger.Error($"An unexpected error has occurred while trying to get value of tooltip of the gamemode with barcode '{barcode}'", ex);
                 ret = string.Empty;
             }
 
@@ -106,7 +106,7 @@ namespace LabPresence.Managers
             }
             catch (Exception ex)
             {
-                Core.Logger.Error($"An unexpected error has occurred while trying to get value of tooltip of the gamemode with barcode '{barcode}', exception:\n{ex}");
+                Core.Logger.Error($"An unexpected error has occurred while trying to get value of tooltip of the gamemode with barcode '{barcode}'", ex);
                 ret = null;
             }
 
@@ -150,7 +150,7 @@ namespace LabPresence.Managers
             }
             catch (Exception e)
             {
-                Core.Logger.Error($"An unexpected error has occurred while trying to remotely get a key for the gamemode, defaulting to unknown key. Exception:\n{e}");
+                Core.Logger.Error("An unexpected error has occurred while trying to remotely get a key for the gamemode, defaulting to unknown key.", e);
             }
             return "unknown_gamemode";
         }

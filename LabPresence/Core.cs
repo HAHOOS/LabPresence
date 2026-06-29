@@ -120,7 +120,7 @@ namespace LabPresence
             }
             catch (Exception ex)
             {
-                Logger.Error($"An unexpected error has occurred while attempting to register the Fusion Plugin, exception:\n{ex}");
+                Logger.Error("An unexpected error has occurred while attempting to register the Fusion Plugin", ex);
             }
 
             LevelHooks.OnLevelLoaded += (_) =>
@@ -168,7 +168,7 @@ namespace LabPresence
             }
             catch (Exception ex)
             {
-                LoggerInstance.Error($"An unexpected error has occurred while registering URI scheme, exception:\n{ex}");
+                LoggerInstance.Error("An unexpected error has occurred while registering URI scheme", ex);
             }
         }
 
