@@ -4,7 +4,6 @@ using DiscordRPC;
 
 using UnityEngine;
 
-using Il2CppSLZ.Marrow;
 using Il2CppSLZ.Marrow.Warehouse;
 using Il2CppSLZ.Marrow.Interaction;
 using Il2CppSLZ.Marrow.SceneStreaming;
@@ -13,7 +12,6 @@ using MelonLoader.Utils;
 using MelonLoader.Preferences;
 
 using System;
-using System.Linq;
 using System.IO;
 using System.Text.RegularExpressions;
 
@@ -25,8 +23,6 @@ using BoneLib;
 using Scriban.Runtime;
 using LabPresence.Utilities;
 
-// This entire code deservers to just be fucking removed, I wish that I NEVER have to work with it ever again
-// This shit deserves to be coded from scratch
 namespace LabPresence
 {
     public class Core : MelonMod
@@ -41,7 +37,7 @@ namespace LabPresence
 
         internal static MelonPreferences_ReflectiveCategory Category { get; private set; }
 
-        internal static Config.DefaultConfig Config => Category?.GetValue<LabPresence.Config.DefaultConfig>();
+        internal static Config.DefaultConfig Config => Category?.GetValue<Config.DefaultConfig>();
 
         public static DateTimeOffset GameLaunch { get; } = DateTimeOffset.Now;
 

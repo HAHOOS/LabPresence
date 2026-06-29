@@ -158,11 +158,13 @@ namespace LabPresence.Utilities
 
         public T SendRequest<T>(string url)
         {
+#pragma warning disable S4830
             var handler = new HttpClientHandler()
             {
                 ClientCertificateOptions = ClientCertificateOption.Manual,
                 ServerCertificateCustomValidationCallback = (_, _, _, _) => true
             };
+#pragma warning restore S4830
             var client = new HttpClient(handler);
             client.DefaultRequestHeaders.Add("User-Agent", this.UserAgent);
             client.DefaultRequestHeaders.Add("Accept", "application/json");

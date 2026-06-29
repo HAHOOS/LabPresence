@@ -7,8 +7,6 @@ using LabPresence.Utilities;
 using Scriban;
 using Scriban.Runtime;
 
-using static System.Net.Mime.MediaTypeNames;
-
 namespace LabPresence.Managers
 {
     public static class PlaceholderManager

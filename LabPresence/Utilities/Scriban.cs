@@ -9,8 +9,6 @@ using Il2CppSLZ.Marrow.Interaction;
 using Il2CppSLZ.Marrow.SceneStreaming;
 using Il2CppSLZ.Marrow.Warehouse;
 
-using MelonLoader;
-
 using Scriban.Runtime;
 
 using UnityEngine;
