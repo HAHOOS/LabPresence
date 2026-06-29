@@ -43,7 +43,6 @@ namespace LabPresence.Utilities
 
         public ScribanCrate(Crate crate, RefGetter<ScribanPallet> pallet = null)
         {
-            Core.Logger.Msg("crate");
             Title = crate.Title;
             Description = crate.Description;
             Redacted = crate.Redacted;
@@ -118,7 +117,6 @@ namespace LabPresence.Utilities
 
         public ScribanPallet(Pallet pallet)
         {
-            Core.Logger.Msg("pallet");
             Barcode = pallet.Barcode.ID;
             Unlockable = pallet.Unlockable;
             Redacted = pallet.Redacted;
@@ -189,29 +187,18 @@ namespace LabPresence.Utilities
         public string Text { get; } = changelog.text;
     }
 
-    public class ScribanDataCard
+    public class ScribanDataCard(DataCard dataCard)
     {
-        public ScribanDataCard(DataCard dataCard)
-        {
-            Core.Logger.Msg("data card");
-            Title = dataCard.Title;
-            Description = dataCard.Description;
-            Barcode = dataCard.Barcode.ID;
-            Redacted = dataCard.Redacted;
-            Unlockable = dataCard.Unlockable;
-            Pallet = dataCard.Pallet.Barcode.ID;
-        }
+        public string Title { get; } = dataCard.Title;
+        public string Description { get; } = dataCard.Description;
 
-        public string Title { get; }
-        public string Description { get; }
+        public string Barcode { get; } = dataCard.Barcode.ID;
 
-        public string Barcode { get; }
+        public bool Redacted { get; } = dataCard.Redacted;
 
-        public bool Redacted { get; }
+        public bool Unlockable { get; } = dataCard.Unlockable;
 
-        public bool Unlockable { get; }
-
-        public string Pallet { get; }
+        public string Pallet { get; } = dataCard.Pallet.Barcode.ID;
     }
 
     public class ScribanAmmo : ScriptObject

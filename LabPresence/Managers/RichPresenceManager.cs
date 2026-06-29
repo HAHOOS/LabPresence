@@ -98,8 +98,6 @@ namespace LabPresence.Managers
             else
                 largeImage ??= new("icon", "BONELAB");
 
-            Core.Logger.Msg("presence update");
-
             var context = PlaceholderManager.GetTemplateContext();
             largeImage?.ToolTip = Core.RemoveUnityRichText(largeImage?.ToolTip?.ApplyPlaceholders(context));
             smallImage?.ToolTip = Core.RemoveUnityRichText(smallImage?.ToolTip?.ApplyPlaceholders(context));
