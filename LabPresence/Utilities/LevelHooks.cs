@@ -41,8 +41,6 @@ namespace LabPresence.Utilities
             if (_lastStatus == __instance.Status)
                 return;
 
-            Core.Logger.Msg(Enum.GetName(__instance.Status));
-
             _lastStatus = __instance.Status;
             if (__instance.Status == StreamStatus.LOADING)
                 OnLevelLoading.Invoke(__instance.Level);
