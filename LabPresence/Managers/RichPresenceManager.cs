@@ -9,6 +9,8 @@ using DiscordRPC.Exceptions;
 using LabPresence.Config;
 using LabPresence.Utilities;
 
+using MelonLoader;
+
 using Scriban;
 
 using UnityEngine;
@@ -33,29 +35,18 @@ namespace LabPresence.Managers
                 Core.Client.Update(x => x.Timestamps = (OverrideTimestamp?.Timestamp != null) ? OverrideTimestamp?.Timestamp?.ToRPC() : Timestamp.ToRPC());
         }
 
-        private static float time = 0f;
-        private static Presence old = null;
-
-        internal static void OnUpdate()
+        internal static void Setup()
         {
-            if (CurrentPresence != null && AutoUpdate)
-            {
-                time += Time.deltaTime;
-                if (CurrentPresence != old)
-                {
-                    time = 0f;
-                    old = CurrentPresence;
-                }
+            MelonCoroutines.Start(OnUpdate());
+        }
 
-                if (time >= Core.Config.RefreshTime)
-                {
-                    TrySetRichPresence(CurrentPresence.Config, CurrentPresence.Type, CurrentPresence.Party, CurrentPresence.Secrets, CurrentPresence.LargeImage, CurrentPresence.SmallImage);
-                    time = 0f;
-                }
-            }
-            else
+        internal static System.Collections.IEnumerator OnUpdate()
+        {
+            while (!Core.Deinit)
             {
-                time = 0f;
+                yield return new WaitForSeconds(Core.Config?.RefreshTime ?? 5f);
+                if (AutoUpdate && CurrentPresence != null)
+                    TrySetRichPresence(CurrentPresence.Config, CurrentPresence.Type, CurrentPresence.Party, CurrentPresence.Secrets, CurrentPresence.LargeImage, CurrentPresence.SmallImage);
             }
         }
 

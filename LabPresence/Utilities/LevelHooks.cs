@@ -50,7 +50,8 @@ namespace LabPresence.Utilities
     [HarmonyPatch(typeof(SceneStreamer))]
     public static class SceneStreamerPatches
     {
-        [HarmonyPatch(nameof(SceneStreamer.Load))]
+        [HarmonyPatch(nameof(SceneStreamer.Load), typeof(Barcode), typeof(Barcode))]
+        [HarmonyPatch(nameof(SceneStreamer.Load), typeof(LevelCrateReference), typeof(LevelCrateReference))]
         [HarmonyPatch(nameof(SceneStreamer.LoadAsync))]
         [HarmonyPostfix]
         public static void OnLoading()

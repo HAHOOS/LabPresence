@@ -22,6 +22,7 @@ using LabPresence.Plugins.Default;
 using BoneLib;
 using Scriban.Runtime;
 using LabPresence.Utilities;
+using System.Threading;
 
 namespace LabPresence
 {
@@ -47,6 +48,8 @@ namespace LabPresence
 
         public static bool FirstLevelLoad { get; private set; }
 
+        public static bool Deinit { get; private set; }
+
         public override void OnInitializeMelon()
         {
             if (HelperMethods.IsAndroid())
@@ -58,6 +61,7 @@ namespace LabPresence
 
             Logger = LoggerInstance;
             LevelHooks.Setup();
+            RichPresenceManager.Setup();
 
             LoggerInstance.Msg("Creating preferences");
             var dir = Directory.CreateDirectory(Path.Combine(MelonEnvironment.UserDataDirectory, "LabPresence"));
@@ -147,6 +151,11 @@ namespace LabPresence
             LoggerInstance.Msg("Initialized.");
         }
 
+        public override void OnDeinitializeMelon()
+        {
+            Deinit = true;
+        }
+
         public static void ValidateDefaultConfig()
         {
             if (!Config.LevelLoaded.ValidateConfig()) Config.LevelLoaded = new Config.DefaultConfig().LevelLoaded;
@@ -186,17 +195,13 @@ namespace LabPresence
 
         private static void AddDefaultPlaceholders()
         {
-            PlaceholderManager.RegisterPlaceholder("default", () =>
-            {
-                var scriptObject = new ScriptObject(StringComparer.OrdinalIgnoreCase)
+            PlaceholderManager.RegisterPlaceholder("default", () => new ScriptObject(StringComparer.OrdinalIgnoreCase)
                 {
                     { "game", new ScribanGame() },
                     { "player", new ScribanPlayer() },
                     { "ammo", new ScribanAmmo() }
-                };
-
-                return scriptObject;
-            });
+                }
+            );
         }
 
         public static string CleanLevelName()
@@ -258,6 +263,21 @@ namespace LabPresence
                         RichPresenceManager.SetTimestampToCurrentTime(true);
                     }
                 }
+            }
+        }
+
+        public static void Repeat(Action callback, out CancellationTokenSource token, float seconds = 5)
+        {
+            token = new CancellationTokenSource();
+            MelonCoroutines.Start(RepeatedDelay(callback, seconds, token));
+        }
+
+        private static System.Collections.IEnumerator RepeatedDelay(Action callback, float seconds = 5, CancellationTokenSource token = null)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                yield return new WaitForSeconds(seconds);
+                callback?.Invoke();
             }
         }
 
