@@ -1,11 +1,15 @@
 ﻿using System;
 
 using Il2CppSLZ.Marrow.SceneStreaming;
-using Il2CppSLZ.Marrow.Utilities;
 using Il2CppSLZ.Marrow.Warehouse;
+
+using HarmonyLib;
+
+using BoneLib;
 
 namespace LabPresence.Utilities
 {
+    [HarmonyPatch(typeof(StreamSession))]
     public static class LevelHooks
     {
         public static LevelCrate CurrentLevel => SceneStreamer.Session?.Level ?? null;
@@ -14,51 +18,44 @@ namespace LabPresence.Utilities
 
         public static Action<LevelCrate> OnLevelLoading { get; set; }
 
-        public static Action<LevelCrate> OnLevelUnloaded { get; set; }
+        public static Action OnLevelUnloaded { get; set; }
 
-        internal static LastStatus LastStatus { get; private set; }
+        private static StreamStatus _lastStatus;
 
-        internal static void OnUpdate()
+        public static void Setup()
         {
-            if (!MarrowGame.IsInitialized)
+            Hooking.OnLevelLoaded += (_) => OnLevelLoaded?.Invoke(CurrentLevel);
+            Hooking.OnLevelUnloaded += () => OnLevelUnloaded?.Invoke();
+        }
+
+        // This only seems to work for the LOADING status
+        [HarmonyPatch(nameof(StreamSession.Load))]
+        [HarmonyPatch(nameof(StreamSession.Level), MethodType.Setter)]
+        [HarmonyPatch(nameof(StreamSession.Status), MethodType.Setter)]
+        [HarmonyPostfix]
+        public static void OnLoading(StreamSession __instance)
+        {
+            if (__instance == null)
                 return;
 
-            if (SceneStreamer.Session == null)
+            if (_lastStatus == __instance.Status)
                 return;
 
-            if (SceneStreamer.Session.Level == null)
-                return;
+            Core.Logger.Msg(Enum.GetName(__instance.Status));
 
-            if (LastStatus?.UpToDate(SceneStreamer.Session.Level, SceneStreamer.Session.Status) != true)
-            {
-                try
-                {
-                    if (SceneStreamer.Session.Status == StreamStatus.DONE)
-                        OnLevelLoaded?.Invoke(SceneStreamer.Session.Level);
-                    else if (SceneStreamer.Session.Status == StreamStatus.LOADING)
-                        OnLevelLoading?.Invoke(SceneStreamer.Session.Level);
-
-                    if (SceneStreamer.Session.Status != StreamStatus.DONE && LastStatus?.Status == StreamStatus.DONE)
-                        OnLevelUnloaded?.Invoke(LastStatus?.Level);
-                }
-                finally
-                {
-                    LastStatus = new(SceneStreamer.Session.Status, SceneStreamer.Session.Level);
-                }
-            }
+            _lastStatus = __instance.Status;
+            if (__instance.Status == StreamStatus.LOADING)
+                OnLevelLoading.Invoke(__instance.Level);
         }
     }
 
-    internal class LastStatus(StreamStatus status, LevelCrate level)
+    [HarmonyPatch(typeof(SceneStreamer))]
+    public static class SceneStreamerPatches
     {
-        internal StreamStatus Status { get; set; } = status;
-
-        internal LevelCrate Level { get; set; } = level;
-
-        internal bool UpToDate(string barcode, StreamStatus status)
-            => Level?.Barcode?.ID == barcode && Status == status;
-
-        internal bool UpToDate(LevelCrate level, StreamStatus status)
-            => Level?.Barcode?.ID == level?.Barcode?.ID && Status == status;
+        [HarmonyPatch(nameof(SceneStreamer.Load))]
+        [HarmonyPatch(nameof(SceneStreamer.LoadAsync))]
+        [HarmonyPostfix]
+        public static void OnLoading()
+            => LevelHooks.OnLoading(SceneStreamer.Session);
     }
 }

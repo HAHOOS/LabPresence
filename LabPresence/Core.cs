@@ -57,6 +57,7 @@ namespace LabPresence
             }
 
             Logger = LoggerInstance;
+            LevelHooks.Setup();
 
             LoggerInstance.Msg("Creating preferences");
             var dir = Directory.CreateDirectory(Path.Combine(MelonEnvironment.UserDataDirectory, "LabPresence"));
@@ -134,7 +135,7 @@ namespace LabPresence
             };
 
             LevelHooks.OnLevelLoading += (_) => Overwrites.OnLevelLoading.Run();
-            LevelHooks.OnLevelUnloaded += (_) => Overwrites.OnLevelUnloaded.Run();
+            LevelHooks.OnLevelUnloaded += Overwrites.OnLevelUnloaded.Run;
 
             AssetWarehouse.OnReady((Il2CppSystem.Action)Overwrites.OnAssetWarehouseLoaded.Run);
 
@@ -240,7 +241,6 @@ namespace LabPresence
 
             RichPresenceManager.OnUpdate();
             Fps.OnUpdate();
-            LevelHooks.OnUpdate();
 
             _elapsedSecondsDateCheck += Time.deltaTime;
 
