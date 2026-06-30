@@ -152,7 +152,6 @@ namespace LabPresence
             if (!Config.LevelLoaded.ValidateConfig()) Config.LevelLoaded = new Config.DefaultConfig().LevelLoaded;
             if (!Config.LevelLoading.ValidateConfig()) Config.LevelLoading = new Config.DefaultConfig().LevelLoading;
             if (!Config.PreGameStarted.ValidateConfig()) Config.PreGameStarted = new Config.DefaultConfig().PreGameStarted;
-            if (!Config.PreGameStarted.ValidateConfig()) Config.PreGameStarted = new Config.DefaultConfig().PreGameStarted;
             if (!Config.AssetWarehouseLoaded.ValidateConfig()) Config.AssetWarehouseLoaded = new Config.DefaultConfig().AssetWarehouseLoaded;
             Category.SaveToFile(false);
         }
